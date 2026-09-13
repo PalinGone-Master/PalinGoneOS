@@ -17,19 +17,16 @@
   "flakes"
  ];
 
- # Activation Dconf pour les applis GTK et les 3 boutons
- programs.dconf.enable = true;
- programs.dconf.profiles.user = {
-     databases = [
-       {
-         settings = {
-           "org/gnome/desktop/wm/preferences" = {
-             button-layout = "appmenu:minimize,maximize,close";
-           };
-         };
-       }
-     ];
-   };
+ # Activation "Maximiser et minimiser" GTK 3+4
+ environment.etc."skel/.config/gtk-3.0/settings.ini".text = ''
+   [Settings]
+   gtk-decoration-layout=minimize,maximize,close
+ '';
+
+ environment.etc."skel/.config/gtk-4.0/settings.ini".text = ''
+   [Settings]
+   gtk-decoration-layout=minimize,maximize,close
+ '';
   
 
 
@@ -190,6 +187,9 @@
     gh
     htop
 
+    # Config Avec Commande
+    
+
     # Suite Bureautique    
     libreoffice
 
@@ -286,25 +286,27 @@
   
   
   # Fond d'écran PalinGoneOS
-  environment.etc."backgrounds/palingoneos-wallpaper.png".source = ./branding/wallpaper.png;
-  environment.etc."palingoneos/cosmic-background".source = ./branding/cosmic-background;
 
-    # 2. Service utilisateur déclaratif pour initialiser le profil COSMIC sans intervention humaine
-    systemd.user.services.palingoneos-init-cosmic = {
-      description = "Initialize default COSMIC configuration";
-      wantedBy = [ "graphical-session.target" ];
-      script = ''
-        CONFIG_DIR="$HOME/.config/cosmic/com.system76.CosmicBackground/v1"
-        if [ ! -f "$CONFIG_DIR/all" ]; then
-          mkdir -p "$CONFIG_DIR"
-          cp /etc/palingoneos/cosmic-background "$CONFIG_DIR/all"
-        fi
-      '';
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-    };
+
+  environment.etc."palingoneos/wallpaper.png".source =
+    ./branding/wallpaper.png;
+
+  environment.etc."skel/.config/cosmic/com.system76.CosmicBackground/v1/all".text = ''
+  (
+      output: "all",
+      source: Path("/etc/palingoneos/wallpaper.png"),
+      filter_by_theme: true,
+      rotation_frequency: 300,
+      filter_method: Lanczos,
+      scaling_mode: Zoom,
+      sampling_method: Alphanumeric,
+  )
+  '';
+
+  environment.etc."skel/.config/cosmic/com.system76.CosmicBackground/v1/same-on-all".text = ''
+  true
+  '';
+
 
   # COSMIC Desktop
   services.displayManager.cosmic-greeter.enable = true;
