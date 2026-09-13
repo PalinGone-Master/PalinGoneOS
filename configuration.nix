@@ -287,9 +287,24 @@
   
   # Fond d'écran PalinGoneOS
   environment.etc."backgrounds/palingoneos-wallpaper.png".source = ./branding/wallpaper.png;
+  environment.etc."palingoneos/cosmic-background".source = ./branding/cosmic-background;
 
-  # Le fichier de configuration par défaut pour le profil des nouveaux utilisateurs
-  environment.etc."skel/.config/cosmic/com.system76.CosmicBackground/v1/all".source = ./branding/cosmic-background;
+    # 2. Service utilisateur déclaratif pour initialiser le profil COSMIC sans intervention humaine
+    systemd.user.services.palingoneos-init-cosmic = {
+      description = "Initialize default COSMIC configuration";
+      wantedBy = [ "graphical-session.target" ];
+      script = ''
+        CONFIG_DIR="$HOME/.config/cosmic/com.system76.CosmicBackground/v1"
+        if [ ! -f "$CONFIG_DIR/all" ]; then
+          mkdir -p "$CONFIG_DIR"
+          cp /etc/palingoneos/cosmic-background "$CONFIG_DIR/all"
+        fi
+      '';
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+    };
 
   # COSMIC Desktop
   services.displayManager.cosmic-greeter.enable = true;
