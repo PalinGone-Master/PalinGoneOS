@@ -18,6 +18,11 @@
  ];
 
 
+ #GitHub Dépot
+ nix.extraOptions = "
+   access-tokens = github.com=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
+ ";
+
  #============================
  # Fastfetch PalinGoneOS
  #============================
@@ -261,6 +266,23 @@
   boot.kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=false" ];
   boot.consoleLogLevel = 0;
   
+  # Fond d'écran PalinGoneOS
+  environment.etc."backgrounds/palingoneos-wallpaper.png".source = ./branding/wallpaper.png;
+  
+  # Pré-configuration par défaut pour le premier démarrage / nouvel utilisateur
+  system.activationScripts.defaultCosmicWallpaper = ''
+    mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicBackground/v1
+    cat <<'EOF' > /etc/skel/.config/cosmic/com.system76.CosmicBackground/v1/all
+   (
+      output: "all",
+      source: Path("/etc/backgrounds/palingoneos-wallpaper.png"),
+      filter_by_theme: true,
+      rotation_frequency: 300,
+      play_mode: Playlist,
+      sampling_method: Alsam,
+   )
+  EOF
+  '';
 
 
   # COSMIC Desktop
