@@ -272,9 +272,11 @@
   
   
   
-# Fond d'écran PalinGoneOS
+  # Fond d'écran PalinGoneOS
   environment.etc."backgrounds/palingoneos-wallpaper.png".source = ./branding/wallpaper.png;
 
+  # Le fichier de configuration par défaut pour le profil des nouveaux utilisateurs
+  environment.etc."skel/.config/cosmic/com.system76.CosmicBackground/v1/all".source = ./branding/cosmic-background;
 
   # COSMIC Desktop
   services.displayManager.cosmic-greeter.enable = true;
