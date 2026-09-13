@@ -19,19 +19,18 @@
 
  # Activation Dconf pour les applis GTK et les 3 boutons
  programs.dconf.enable = true;
- services.udev.packages = [ pkgs.gnome-settings-daemon ]; # Utile pour charger les schémas si besoin
+ programs.dconf.profiles.user = {
+     databases = [
+       {
+         settings = {
+           "org/gnome/desktop/wm/preferences" = {
+             button-layout = "appmenu:minimize,maximize,close";
+           };
+         };
+       }
+     ];
+   };
   
-  # Configuration déclarative dconf via les profils système
-  # (ou via les programmes dédiés selon votre version de module)
-  environment.etc."dconf/profile/user".text = ''
-    user-db:user
-    system-db:local
-  '';
-
-  environment.etc."dconf/db/local.d/01-window-buttons".text = ''
-    [org/gnome/desktop/wm/preferences]
-    button-layout="appmenu:minimize,maximize,close"
-  ''; 
 
 
  #GitHub Dépot
