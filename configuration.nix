@@ -19,7 +19,7 @@
 
  # Activation Dconf pour les applis GTK et les 3 boutons
  programs.dconf.enable = true;
- environmnet.variables = {
+ environment.variables = {
    GTK_CSD = "1";
  }; 
 
