@@ -80,8 +80,7 @@
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.systemd-boot.configurationLimit = 5;
-
+  boot.loader.systemd-boot.configurationLimit = 8 ; 
   networking.hostName = "palingoneos"; # Define your hostname.
 
   # Configure network connections interactively with nmcli or nmtui.
@@ -176,6 +175,7 @@
     htop
     fastfetch
     gh
+    htop
 
     # Suite Bureautique    
     libreoffice
@@ -274,37 +274,6 @@
   
 # Fond d'écran PalinGoneOS
   environment.etc."backgrounds/palingoneos-wallpaper.png".source = ./branding/wallpaper.png;
-
-  # Pré-configuration par défaut pour le premier démarrage / nouvel utilisateur
-  system.activationScripts.defaultCosmicWallpaper = ''
-  # Fond d'écran
-    mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicBackground/v1
-    cat <<'EOF' > /etc/skel/.config/cosmic/com.system76.CosmicBackground/v1/all
-    (
-      output: "all",
-      source: Path("/etc/backgrounds/palingoneos-wallpaper.png"),
-      filter_by_theme: true,
-      rotation_frequency: 300,
-      play_mode: Playlist,
-      sampling_method: Alsam,
-    )
-   EOF
-
-      # Applications par défaut (COSMIC Reader pour les images)
-      mkdir -p /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1
-      cat <<'EOF' > /etc/skel/.config/cosmic/com.system76.CosmicAppList/v1/default_apps
-   (
-      apps: {
-        "image/png": "com.system76.CosmicReader",
-        "image/jpeg": "com.system76.CosmicReader",
-        "image/jpg": "com.system76.CosmicReader",
-        "image/webp": "com.system76.CosmicReader",
-        "image/gif": "com.system76.CosmicReader",
-        "image/svg+xml": "com.system76.CosmicReader",
-      },
-   )
-   EOF
-   '';
 
 
   # COSMIC Desktop
