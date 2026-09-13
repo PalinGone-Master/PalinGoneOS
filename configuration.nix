@@ -18,14 +18,15 @@
  ];
 
  # Activation "Maximiser et minimiser" GTK 3+4
- environment.etc."skel/.config/gtk-3.0/settings.ini".text = ''
+
+ environment.etc."xdg/gtk-3.0/settings.ini".text = ''
    [Settings]
-   gtk-decoration-layout=minimize,maximize,close
+   gtk-decoration-layout=minimize,maximize:close
  '';
 
- environment.etc."skel/.config/gtk-4.0/settings.ini".text = ''
+ environment.etc."xdg/gtk-4.0/settings.ini".text = ''
    [Settings]
-   gtk-decoration-layout=minimize,maximize,close
+   gtk-decoration-layout=minimize,maximize:close
  '';
   
 
