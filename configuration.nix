@@ -17,7 +17,11 @@
   "flakes"
  ];
 
-
+ # Activation Dconf pour les applis GTK et les 3 boutons
+ programs.dconf.enable = true;
+ environmnet.variables = {
+   GTK_CSD = "1";
+ }; 
 
 
  #GitHub Dépot
