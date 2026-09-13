@@ -18,16 +18,17 @@
  ];
 
  # Activation "Maximiser et minimiser" GTK 3+4
+  systemd.user.services.palingoneos-dconf-buttons = {
+   description = "PalinGoneOS - GTK window buttons";
 
- environment.etc."xdg/gtk-3.0/settings.ini".text = ''
-   [Settings]
-   gtk-decoration-layout=minimize,maximize:close
- '';
+   wantedBy = [ "graphical-session.target" ];
+   after = [ "graphical-session.target" ];
 
- environment.etc."xdg/gtk-4.0/settings.ini".text = ''
-   [Settings]
-   gtk-decoration-layout=minimize,maximize:close
- '';
+   serviceConfig = {
+     Type = "oneshot";
+     ExecStart = "${pkgs.dconf}/bin/dconf write /org/gnome/desktop/wm/preferences/button-layout \"':minimize,maximize,close'\"";
+   };
+ };
   
 
 
@@ -173,6 +174,9 @@
  };
   # Navigateur.
     programs.firefox.enable = true;
+    programs.firefox.preferences = {
+      "browser.nova.enabled" = true;
+};
 
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
@@ -187,7 +191,7 @@
     fastfetch
     gh
     htop
-
+    gsettings-desktop-schemas
     # Config Avec Commande
     
 
