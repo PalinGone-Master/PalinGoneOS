@@ -192,6 +192,19 @@
     gh
     htop
     gsettings-desktop-schemas
+    rustc
+    cargo
+    just
+    cargo-generate
+    helix
+    gcc
+    pkg-config
+    libxkbcommon.dev
+
+
+
+
+
     # Config Avec Commande
     
 

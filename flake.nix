@@ -25,6 +25,10 @@
 	./configuration.nix
       # Configuration du module Flatpak
       nix-flatpak.nixosModules.nix-flatpak
+
+      {
+        system.configurationRevision = self.rev or self.dirtyRev;
+      }
       ];
     };
   };
