@@ -1,0 +1,57 @@
+// PalinGoneOS Plymouth Theme - Version & Texte animé pur
+
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+
+// --- 1. LOGO CENTRÉ ---
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+
+logo_x = (screen_width - logo.image.GetWidth()) / 2;
+logo_y = (screen_height - logo.image.GetHeight()) / 2;
+
+logo.sprite.SetPosition(logo_x, logo_y, 10);
+
+
+// --- 2. LIGNE 1 : VERSION (PalinGoneOS 0.30.9) ---
+version_image = Image.Text("0.30.9", 0.75, 0.55, 0.95);
+version_sprite = Sprite(version_image);
+
+// Placé à 120px du bas
+version_y = screen_height - version_image.GetHeight() - 120;
+version_x = (screen_width - version_image.GetWidth()) / 2;
+
+version_sprite.SetPosition(version_x, version_y, 10);
+
+
+// --- 3. LIGNE 2 : STATUT ANIMÉ ---
+txt[0] = Image.Text("■",       0.75, 0.55, 0.95);
+txt[1] = Image.Text("■ ■ ",     0.75, 0.55, 0.95);
+txt[2] = Image.Text("■ ■ ■ ",   0.75, 0.55, 0.95);
+txt[3] = Image.Text("■ ■ ■ ■ ", 0.75, 0.55, 0.95);
+
+// On initialise le sprite directement avec la première image
+text_sprite = Sprite(txt[0]);
+
+// Placé 35px en dessous de la version
+text_y = version_y + version_image.GetHeight() + 15;
+text_x = (screen_width - txt[3].GetWidth()) / 2;
+
+text_sprite.SetPosition(text_x, text_y, 10);
+
+
+// --- 4. ANIMATION DE LA SECONDE LIGNE ---
+frame_counter = 0;
+state = 0;
+
+fun refresh_callback () {
+    frame_counter++;
+    if (frame_counter >= 20) {
+        frame_counter = 0;
+        state = (state + 1) % 4;
+        text_sprite.SetImage(txt[state]);
+    }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);

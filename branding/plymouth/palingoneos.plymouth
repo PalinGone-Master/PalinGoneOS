@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=PalinGoneOS
+Description=Theme PalinGoneOS avec logo en bas et barre dynamique
+ModuleName=script
+
+[script]
+ImageDir=/etc/nixos/branding/plymouth
+ScriptFile=/etc/nixos/branding/plymouth/palingoneos.script
