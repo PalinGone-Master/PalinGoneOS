@@ -18,6 +18,8 @@
  ];
 
 
+
+
  #GitHub Dépot
  nix.extraOptions = "
    access-tokens = github.com=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
@@ -78,6 +80,7 @@
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.systemd-boot.configurationLimit = 5;
 
   networking.hostName = "palingoneos"; # Define your hostname.
 
@@ -172,6 +175,7 @@
     curl
     htop
     fastfetch
+    gh
 
     # Suite Bureautique    
     libreoffice
