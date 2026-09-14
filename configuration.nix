@@ -200,13 +200,28 @@
     gcc
     pkg-config
     libxkbcommon.dev
+    
 
+    
 
 
 
 
     # Config Avec Commande
     
+
+
+    (pkgs.writeShellScriptBin "palingoneos-update-helper" ''
+      set -euo pipefail
+
+      if [ -n "$(git -C /etc/nixos status --porcelain)" ]; then
+        echo "Configuration locale modifiée, mise à jour refusée."
+        exit 1
+      fi
+
+      exec /run/current-system/sw/bin/nixos-rebuild switch \
+        --flake /etc/nixos#palingoneos
+    '')
 
     # Suite Bureautique    
     libreoffice
@@ -270,12 +285,9 @@
 
 
   system.nixos.distroName = "PalinGoneOS";
-  system.nixos.label = "PalinGoneOS_0.30.10";
+  system.nixos.label = "PalinGoneOS_0.30.9";
   system.stateVersion = "26.05";
-
-
-  environment.etc."palingoneos/version".text = "0.30.10";
-
+  environment.etc."palingoneos/version".text = "0.30.9";
 
   #==========================================
   # Plymouth
@@ -333,7 +345,7 @@
   # COSMIC Desktop
   services.displayManager.cosmic-greeter.enable = true;
   services.desktopManager.cosmic.enable = true;
-
+  security.polkit.enable = true;
 
 
   # ==========================
