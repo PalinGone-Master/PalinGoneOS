@@ -7,7 +7,7 @@
 #========================================================================================================
 
 
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, inputs, ... }:
 
  
 {
@@ -238,7 +238,9 @@
           exec /run/current-system/sw/bin/nixos-rebuild switch \
             --flake /etc/nixos#palingoneos
     '')
+    
 
+    inputs.palingoneos-updater.defaultPackage.${pkgs.system}
     # Suite Bureautique    
     libreoffice
 
