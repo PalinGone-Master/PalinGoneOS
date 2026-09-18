@@ -169,11 +169,17 @@
      }
    ];
  };
-  # Navigateur.
-    programs.firefox.enable = true;
-    programs.firefox.preferences = {
+ # Navigateur.
+  programs.firefox = {
+    enable = true;
+    languagePacks = [ "fr" ];
+    policies = {
+      RequestedLocales = [ "fr" ];
+    };
+    preferences = {
       "browser.nova.enabled" = true;
-};
+    };
+  };
 
 
   # Définition propre du shell par défaut pour tous les futurs utilisateurs de votre OS
