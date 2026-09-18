@@ -15,7 +15,7 @@
 
 
  # L'updater de PalinGoneOS
- palingoneos-updater.url = "github:PalinGone-Master/palingoneos-updater/v1.0";
+  palingoneos-updater.url = "github:PalinGone-Master/palingoneos-updater/v1.0";
   };
 
 
