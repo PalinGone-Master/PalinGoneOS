@@ -290,9 +290,9 @@
 
 
   system.nixos.distroName = "PalinGoneOS";
-  system.nixos.label = "PalinGoneOS_0.30.12";
+  system.nixos.label = "PalinGoneOS_0.30.13";
   system.stateVersion = "26.05";
-  environment.etc."palingoneos/version".text = "0.30.12";
+  environment.etc."palingoneos/version".text = "0.30.13";
 
   #==========================================
   # Plymouth
