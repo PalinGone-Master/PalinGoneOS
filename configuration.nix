@@ -229,7 +229,7 @@
           if [ -n "$VERSION" ]; then
             echo "Basculement vers la version v$VERSION..."
             git -C /etc/nixos fetch origin --tags
-            git -C /etc/nixos checkout "v$VERSION"
+            git -C /etc/nixos checkout -f "v$VERSION"
           fi
 
           exec /run/current-system/sw/bin/nixos-rebuild switch \
@@ -298,9 +298,9 @@
 
 
   system.nixos.distroName = "PalinGoneOS";
-  system.nixos.label = "PalinGoneOS_0.30.9";
+  system.nixos.label = "PalinGoneOS_0.30.10";
   system.stateVersion = "26.05";
-  environment.etc."palingoneos/version".text = "0.30.9";
+  environment.etc."palingoneos/version".text = "0.30.10";
 
   #==========================================
   # Plymouth
