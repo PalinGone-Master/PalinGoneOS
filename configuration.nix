@@ -178,6 +178,11 @@
       "browser.nova.enabled" = true;
 };
 
+
+  environment.shells = [
+    pkgs.bashInteractive
+    pkgs.bash
+  ];
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
    environment.systemPackages = with pkgs; [
