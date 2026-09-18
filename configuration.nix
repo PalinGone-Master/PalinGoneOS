@@ -32,10 +32,7 @@
   
 
 
- #GitHub Dépot
- nix.extraOptions = "
-   access-tokens = github.com=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
- ";
+ 
 
  #============================
  # Fastfetch PalinGoneOS
