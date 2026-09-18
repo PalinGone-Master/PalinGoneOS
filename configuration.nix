@@ -179,10 +179,16 @@
 };
 
 
+  # Définition propre du shell par défaut pour tous les futurs utilisateurs de votre OS
+  users.defaultUserShell = pkgs.bash;
+
+  # Inscription globale et pérenne des chemins dynamiques et statiques dans /etc/shells
   environment.shells = [
-    pkgs.bashInteractive
     pkgs.bash
+    "/run/current-system/sw/bin/bash"
+    "/run/current-system/sw/bin/sh"
   ];
+
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
    environment.systemPackages = with pkgs; [
@@ -215,17 +221,19 @@
     # Config Avec Commande
     
 
-
     (pkgs.writeShellScriptBin "palingoneos-update-helper" ''
-      set -euo pipefail
+          set -euo pipefail
 
-      if [ -n "$(git -C /etc/nixos status --porcelain)" ]; then
-        echo "Configuration locale modifiée, mise à jour refusée."
-        exit 1
-      fi
+          VERSION="''${1:-}"
 
-      exec /run/current-system/sw/bin/nixos-rebuild switch \
-        --flake /etc/nixos#palingoneos
+          if [ -n "$VERSION" ]; then
+            echo "Basculement vers la version v$VERSION..."
+            git -C /etc/nixos fetch origin --tags
+            git -C /etc/nixos checkout "v$VERSION"
+          fi
+
+          exec /run/current-system/sw/bin/nixos-rebuild switch \
+            --flake /etc/nixos#palingoneos
     '')
 
     # Suite Bureautique    
@@ -290,9 +298,9 @@
 
 
   system.nixos.distroName = "PalinGoneOS";
-  system.nixos.label = "PalinGoneOS_0.30.13";
+  system.nixos.label = "PalinGoneOS_0.30.14";
   system.stateVersion = "26.05";
-  environment.etc."palingoneos/version".text = "0.30.13";
+  environment.etc."palingoneos/version".text = "0.30.14";
 
   #==========================================
   # Plymouth
