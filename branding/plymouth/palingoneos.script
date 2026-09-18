@@ -14,8 +14,8 @@ logo_y = (screen_height - logo.image.GetHeight()) / 2;
 logo.sprite.SetPosition(logo_x, logo_y, 10);
 
 
-// --- 2. LIGNE 1 : VERSION (PalinGoneOS 0.30.12) ---
-version_image = Image.Text("0.30.12", 0.75, 0.55, 0.95);
+// --- 2. LIGNE 1 : VERSION (PalinGoneOS 0.30.9) ---
+version_image = Image.Text("0.30.9", 0.75, 0.55, 0.95);
 version_sprite = Sprite(version_image);
 
 // Placé à 120px du bas
