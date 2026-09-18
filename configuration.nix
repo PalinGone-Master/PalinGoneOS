@@ -240,7 +240,7 @@
     '')
     
 
-    inputs.palingoneos-updater.defaultPackage.${pkgs.system}
+    inputs.palingoneos-updater.packages.${pkgs.system}.palin-gone-os-updater
     # Suite Bureautique    
     libreoffice
 
