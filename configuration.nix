@@ -228,7 +228,7 @@
 
           if [ -n "$VERSION" ]; then
             echo "Basculement vers la version v$VERSION..."
-            git -C /etc/nixos fetch origin --tags
+            git -C /etc/nixos fetch origin --tags --force
             git -C /etc/nixos checkout -f "v$VERSION"
           fi
 
