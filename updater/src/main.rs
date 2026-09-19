@@ -1,11 +1,11 @@
-use iced::widget::{button, column, container, progress_bar, scrollable, text, Space};
-use iced::{Alignment, Element, Length, Sandbox, Settings, Theme};
+use iced::widget::{button, column, container, scrollable, text, Space};
+use iced::{Alignment, Element, Length, Sandbox, Settings, Size, Theme};
 use std::process::{Command, Stdio};
 
 pub fn main() -> iced::Result {
     UpdaterApp::run(Settings {
         window: iced::window::Settings {
-            size: (650, 500),
+            size: Size::new(650.0, 500.0),
             resizable: false,
             decorations: true,
             ..Default::default()
