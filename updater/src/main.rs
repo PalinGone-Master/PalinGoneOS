@@ -3,6 +3,11 @@ use iced::{Alignment, Element, Length, Sandbox, Settings, Size, Theme};
 use std::process::{Command, Stdio};
 
 pub fn main() -> iced::Result {
+    // Permet à WGPU de tester Vulkan puis GL en dernier recours
+    if std::env::var("WGPU_BACKEND").is_err() {
+        std::env::set_var("WGPU_BACKEND", "vulkan,gl");
+    }
+
     UpdaterApp::run(Settings {
         window: iced::window::Settings {
             size: Size::new(650.0, 500.0),

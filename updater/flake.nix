@@ -24,11 +24,14 @@
             pkgs.libxkbcommon
             pkgs.wayland
             pkgs.libglvnd
+            pkgs.libGL
+            pkgs.mesa
             pkgs.stdenv.cc.cc.lib
             pkgs.libx11
             pkgs.libxcursor
             pkgs.libxi
             pkgs.libxrandr
+            pkgs.vulkan-loader
           ];
 
           postInstall = ''
@@ -43,13 +46,15 @@
                 pkgs.wayland
                 pkgs.libxkbcommon
                 pkgs.libglvnd
+                pkgs.libGL
                 pkgs.mesa
+                pkgs.vulkan-loader
                 pkgs.stdenv.cc.cc.lib
                 pkgs.libx11
                 pkgs.libxcursor
                 pkgs.libxi
                 pkgs.libxrandr
-            ]}"
+              ]}:/run/opengl-driver/lib"
           '';
         };
 
