@@ -3,7 +3,6 @@ use iced::{Alignment, Element, Length, Sandbox, Settings, Size, Theme};
 use std::process::{Command, Stdio};
 
 pub fn main() -> iced::Result {
-    // Permet à WGPU de tester Vulkan puis GL en dernier recours
     if std::env::var("WGPU_BACKEND").is_err() {
         std::env::set_var("WGPU_BACKEND", "vulkan,gl");
     }
@@ -21,11 +20,14 @@ pub fn main() -> iced::Result {
 
 #[derive(Debug, Clone)]
 enum Message {
+    CheckForUpdates,
     StartUpdate,
 }
 
 enum State {
-    Idle,
+    Checking,
+    UpToDate,
+    UpdateAvailable { new_commits: String },
     Updating { logs: String },
     Finished { success: bool, logs: String },
 }
@@ -38,9 +40,11 @@ impl Sandbox for UpdaterApp {
     type Message = Message;
 
     fn new() -> Self {
-        Self {
-            state: State::Idle,
-        }
+        let mut app = Self {
+            state: State::Checking,
+        };
+        app.check_updates();
+        app
     }
 
     fn title(&self) -> String {
@@ -49,11 +53,15 @@ impl Sandbox for UpdaterApp {
 
     fn update(&mut self, message: Message) {
         match message {
+            Message::CheckForUpdates => {
+                self.check_updates();
+            }
             Message::StartUpdate => {
                 self.state = State::Updating {
                     logs: String::from("Démarrage de la mise à jour système...\n"),
                 };
 
+                // Mise à jour du Flake et reconstruction système
                 let output = Command::new("sudo")
                     .args(["nixos-rebuild", "switch", "--flake", "/etc/nixos#palingoneos"])
                     .stdout(Stdio::piped())
@@ -100,11 +108,36 @@ impl Sandbox for UpdaterApp {
         .align_items(Alignment::Center);
 
         let content: Element<Message> = match &self.state {
-            State::Idle => column![
+            State::Checking => column![
                 Space::with_height(Length::Fixed(20.0)),
-                text("Votre système est prêt à être mis à jour vers la dernière version de la flotte.")
+                text("Recherche de mises à jour sur les serveurs PalinGoneOS...")
                     .size(14),
+            ]
+            .spacing(10)
+            .align_items(Alignment::Center)
+            .into(),
+
+            State::UpToDate => column![
                 Space::with_height(Length::Fixed(20.0)),
+                text("Votre système est entièrement à jour.")
+                    .size(16),
+                Space::with_height(Length::Fixed(20.0)),
+                button(text("Vérifier à nouveau").size(14))
+                    .padding(10)
+                    .on_press(Message::CheckForUpdates),
+            ]
+            .spacing(10)
+            .align_items(Alignment::Center)
+            .into(),
+
+            State::UpdateAvailable { new_commits } => column![
+                Space::with_height(Length::Fixed(15.0)),
+                text("Une nouvelle mise à jour système est disponible !")
+                    .size(16),
+                Space::with_height(Length::Fixed(10.0)),
+                scrollable(text(new_commits).size(11))
+                    .height(Length::Fixed(120.0)),
+                Space::with_height(Length::Fixed(15.0)),
                 button(text("Lancer la mise à jour").size(16))
                     .padding(12)
                     .on_press(Message::StartUpdate),
@@ -126,7 +159,7 @@ impl Sandbox for UpdaterApp {
 
             State::Finished { success, logs } => column![
                 Space::with_height(Length::Fixed(10.0)),
-                text(if *success { "Système mis à jour !" } else { "Erreur de mise à jour" })
+                text(if *success { "Système mis à jour avec succès !" } else { "Erreur lors de la mise à jour" })
                     .size(18),
                 Space::with_height(Length::Fixed(10.0)),
                 scrollable(text(logs).size(11))
@@ -151,5 +184,36 @@ impl Sandbox for UpdaterApp {
 
     fn theme(&self) -> Theme {
         Theme::Dark
+    }
+}
+
+impl UpdaterApp {
+    fn check_updates(&mut self) {
+        // Fetch les commits distants depuis /etc/nixos
+        let _ = Command::new("git")
+            .args(["-C", "/etc/nixos", "fetch", "origin"])
+            .output();
+
+        // Comparer le HEAD local avec origin/main
+        let status = Command::new("git")
+            .args(["-C", "/etc/nixos", "log", "HEAD..origin/main", "--oneline"])
+            .output();
+
+        match status {
+            Ok(out) => {
+                let commits = String::from_utf8_lossy(&out.stdout).trim().to_string();
+                if commits.is_empty() {
+                    self.state = State::UpToDate;
+                } else {
+                    self.state = State::UpdateAvailable {
+                        new_commits: format!("Nouveautés disponibles :\n{}", commits),
+                    };
+                }
+            }
+            Err(_) => {
+                // Si pas de réseau ou erreur git, on retombe sur l'état à jour par sécurité
+                self.state = State::UpToDate;
+            }
+        }
     }
 }

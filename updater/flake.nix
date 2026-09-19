@@ -41,20 +41,21 @@
               cp -r share/applications/* $out/etc/xdg/autostart/
             fi
 
-            wrapProgram $out/bin/palin-gone-os-updater \
-              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath [
-                pkgs.wayland
-                pkgs.libxkbcommon
-                pkgs.libglvnd
-                pkgs.libGL
-                pkgs.mesa
-                pkgs.vulkan-loader
-                pkgs.stdenv.cc.cc.lib
-                pkgs.libx11
-                pkgs.libxcursor
-                pkgs.libxi
-                pkgs.libxrandr
-              ]}:/run/opengl-driver/lib"
+wrapProgram $out/bin/palin-gone-os-updater \
+  --prefix PATH : "${pkgs.lib.makeBinPath [ pkgs.git pkgs.nixos-rebuild ]}" \
+  --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath [
+    pkgs.wayland
+    pkgs.libxkbcommon
+    pkgs.libglvnd
+    pkgs.libGL
+    pkgs.mesa
+    pkgs.vulkan-loader
+    pkgs.stdenv.cc.cc.lib
+    pkgs.libx11
+    pkgs.libxcursor
+    pkgs.libxi
+    pkgs.libxrandr
+  ]}:/run/opengl-driver/lib"
           '';
         };
 
