@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
-Name=PalinGoneOS Updater
-Comment=Mise à jour du système PalinGoneOS
+Name=PalinGoneOS Welcome & Updater
+Comment=Bienvenue et mise à jour de PalinGoneOS
 Exec=palin-gone-os-updater
 Icon=system-software-update
 Categories=System;Settings;

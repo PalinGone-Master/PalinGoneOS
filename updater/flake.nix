@@ -1,5 +1,5 @@
 {
-  description = "PalinGoneOS Updater (Prebuilt, Patched & Wrapped)";
+  description = "PalinGoneOS Welcome & Updater (Rust/Iced Application)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
@@ -10,13 +10,16 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in
       {
-        packages.palin-gone-os-updater = pkgs.stdenv.mkDerivation {
+        packages.palin-gone-os-updater = pkgs.rustPlatform.buildRustPackage {
           pname = "palin-gone-os-updater";
           version = "1.1.0";
           src = ./.;
-          dontUnpack = true;
 
-          nativeBuildInputs = [ pkgs.autoPatchelfHook pkgs.makeWrapper ];
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+
+          nativeBuildInputs = [ pkgs.pkg-config pkgs.makeWrapper ];
           buildInputs = [
             pkgs.libxkbcommon
             pkgs.wayland
@@ -24,18 +27,15 @@
             pkgs.stdenv.cc.cc.lib
             pkgs.xorg.libX11
             pkgs.xorg.libXcursor
-            pkgs.xorg.libXrandr
             pkgs.xorg.libXi
+            pkgs.xorg.libXrandr
           ];
 
-          installPhase = ''
-            mkdir -p $out/bin $out/share/applications $out/etc/xdg/autostart
-            cp $src/bin/palin-gone-os-updater $out/bin/palin-gone-os-updater
-            chmod +x $out/bin/palin-gone-os-updater
-
-            if [ -d "$src/share/applications" ]; then
-              cp -r $src/share/applications/* $out/share/applications/
-              cp -r $src/share/applications/* $out/etc/xdg/autostart/
+          postInstall = ''
+            mkdir -p $out/share/applications $out/etc/xdg/autostart
+            if [ -d "share/applications" ]; then
+              cp -r share/applications/* $out/share/applications/
+              cp -r share/applications/* $out/etc/xdg/autostart/
             fi
 
             wrapProgram $out/bin/palin-gone-os-updater \
@@ -46,8 +46,8 @@
                 pkgs.stdenv.cc.cc.lib
                 pkgs.xorg.libX11
                 pkgs.xorg.libXcursor
-                pkgs.xorg.libXrandr
                 pkgs.xorg.libXi
+                pkgs.xorg.libXrandr
               ]}"
           '';
         };
