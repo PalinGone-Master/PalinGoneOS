@@ -71,19 +71,14 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1789767744,
-        "narHash": "sha256-rrGxdaPrMocFWm5KtaEaYQ4OgVHShEd1RBfIKNBattQ=",
-        "owner": "PalinGone-Master",
-        "repo": "palingoneos-updater",
-        "rev": "6a03d0593d54c4ced5f080fd3792b99bb459f9e4",
-        "type": "github"
+        "path": "./updater",
+        "type": "path"
       },
       "original": {
-        "owner": "PalinGone-Master",
-        "ref": "v1.0",
-        "repo": "palingoneos-updater",
-        "type": "github"
-      }
+        "path": "./updater",
+        "type": "path"
+      },
+      "parent": []
     },
     "root": {
       "inputs": {
