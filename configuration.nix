@@ -240,8 +240,8 @@
     '')
     
 
-    inputs.palingoneos-updater.packages.${pkgs.system}.palin-gone-os-updater
-    # Suite Bureautique    
+  inputs.palingoneos-updater.packages.${pkgs.system}.palin-gone-os-updater
+    # Suite Bureautique
     libreoffice
 
     # Compatibilité Windows et Jeux
@@ -252,6 +252,17 @@
     # Environnement de bureau Cosmic pour PalinGoneOS
     cosmic-store
   ];
+
+  # Configuration système par défaut pour le panneau supérieur COSMIC
+  environment.etc."cosmic/com.system76.CosmicPanel.Panel/v1/plugins_right".text = ''
+    Some([
+      "com.system76.CosmicAppletSystemNotification",
+      "com.system76.CosmicAppletTime",
+      "palin-gone-os-updater"
+    ])
+  '';
+}
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

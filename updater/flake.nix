@@ -13,7 +13,7 @@
         packages.palin-gone-os-updater = pkgs.stdenv.mkDerivation {
           pname = "palin-gone-os-updater";
           version = "1.1.0";
-          src = ./bin/palin-gone-os-updater;
+          src = ./.;
           dontUnpack = true;
 
           nativeBuildInputs = [ pkgs.autoPatchelfHook pkgs.makeWrapper ];
@@ -29,9 +29,13 @@
           ];
 
           installPhase = ''
-            mkdir -p $out/bin
-            cp $src $out/bin/palin-gone-os-updater
+            mkdir -p $out/bin $out/share/applications
+            cp $src/bin/palin-gone-os-updater $out/bin/palin-gone-os-updater
             chmod +x $out/bin/palin-gone-os-updater
+
+            if [ -d "$src/share/applications" ]; then
+              cp -r $src/share/applications/* $out/share/applications/
+            fi
 
             wrapProgram $out/bin/palin-gone-os-updater \
               --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath [

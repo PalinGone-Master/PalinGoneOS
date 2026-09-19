@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=PalinGoneOS Updater
+Comment=Mise à jour du système PalinGoneOS
+Exec=palin-gone-os-updater
+Icon=system-software-update
+Categories=System;Settings;
+Terminal=false
