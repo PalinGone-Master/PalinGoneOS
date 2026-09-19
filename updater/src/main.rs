@@ -1,4 +1,4 @@
-use iced::widget::{button, column, container, progress_bar, scrollable, text, vertical_space};
+use iced::widget::{button, column, container, progress_bar, scrollable, text, Space};
 use iced::{Alignment, Element, Length, Sandbox, Settings, Theme};
 use std::process::{Command, Stdio};
 
@@ -17,12 +17,11 @@ pub fn main() -> iced::Result {
 #[derive(Debug, Clone)]
 enum Message {
     StartUpdate,
-    UpdateProgress(f32, String),
 }
 
 enum State {
     Idle,
-    Updating { progress: f32, logs: String },
+    Updating { logs: String },
     Finished { success: bool, logs: String },
 }
 
@@ -47,13 +46,9 @@ impl Sandbox for UpdaterApp {
         match message {
             Message::StartUpdate => {
                 self.state = State::Updating {
-                    progress: 0.1,
                     logs: String::from("Démarrage de la mise à jour système...\n"),
                 };
-                
-                // Exécution de nixos-rebuild
-                // Note: Dans une version asynchrone complète (Command::perform), 
-                // les logs s'affichent en temps réel via un canal.
+
                 let output = Command::new("sudo")
                     .args(["nixos-rebuild", "switch", "--flake", "/etc/nixos#palingoneos"])
                     .stdout(Stdio::piped())
@@ -65,7 +60,7 @@ impl Sandbox for UpdaterApp {
                         let stdout = String::from_utf8_lossy(&out.stdout);
                         let stderr = String::from_utf8_lossy(&out.stderr);
                         let full_log = format!("{}\n{}", stdout, stderr);
-                        
+
                         if out.status.success() {
                             self.state = State::Finished {
                                 success: true,
@@ -86,23 +81,13 @@ impl Sandbox for UpdaterApp {
                     }
                 }
             }
-            Message::UpdateProgress(p, log) => {
-                if let State::Updating { logs, .. } = &mut self.state {
-                    logs.push_str(&log);
-                    self.state = State::Updating {
-                        progress: p,
-                        logs: logs.clone(),
-                    };
-                }
-            }
         }
     }
 
     fn view(&self) -> Element<Message> {
         let header = column![
             text("Bienvenue sur PalinGoneOS")
-                .size(28)
-                .style(text::Danger),
+                .size(28),
             text("Centre de maintenance et de mise à jour du système")
                 .size(14),
         ]
@@ -111,10 +96,10 @@ impl Sandbox for UpdaterApp {
 
         let content: Element<Message> = match &self.state {
             State::Idle => column![
-                vertical_space(20),
+                Space::with_height(Length::Fixed(20.0)),
                 text("Votre système est prêt à être mis à jour vers la dernière version de la flotte.")
                     .size(14),
-                vertical_space(20),
+                Space::with_height(Length::Fixed(20.0)),
                 button(text("Lancer la mise à jour").size(16))
                     .padding(12)
                     .on_press(Message::StartUpdate),
@@ -123,11 +108,10 @@ impl Sandbox for UpdaterApp {
             .align_items(Alignment::Center)
             .into(),
 
-            State::Updating { progress, logs } => column![
-                vertical_space(10),
-                progress_bar(0.0..=1.0, *progress),
+            State::Updating { logs } => column![
+                Space::with_height(Length::Fixed(10.0)),
                 text("Mise à jour en cours, veuillez patienter...").size(13),
-                vertical_space(10),
+                Space::with_height(Length::Fixed(10.0)),
                 scrollable(text(logs).size(11))
                     .height(Length::Fill),
             ]
@@ -136,16 +120,12 @@ impl Sandbox for UpdaterApp {
             .into(),
 
             State::Finished { success, logs } => column![
-                vertical_space(10),
+                Space::with_height(Length::Fixed(10.0)),
                 text(if *success { "Système mis à jour !" } else { "Erreur de mise à jour" })
                     .size(18),
-                vertical_space(10),
+                Space::with_height(Length::Fixed(10.0)),
                 scrollable(text(logs).size(11))
                     .height(Length::Fill),
-                vertical_space(10),
-                button(text("Fermer").size(14))
-                    .padding(8)
-                    .on_press(Message::StartUpdate), // Ou quitter la fenêtre
             ]
             .spacing(10)
             .align_items(Alignment::Center)
@@ -153,7 +133,7 @@ impl Sandbox for UpdaterApp {
         };
 
         container(
-            column![header, vertical_space(15), content]
+            column![header, Space::with_height(Length::Fixed(15.0)), content]
                 .spacing(10)
                 .align_items(Alignment::Center),
         )
