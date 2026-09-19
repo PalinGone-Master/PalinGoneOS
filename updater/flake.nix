@@ -28,30 +28,26 @@
             pkgs.xorg.libXi
           ];
 
-          installPhase = ''
-            mkdir -p $out/bin $out/share/applications
-            cp $src/bin/palin-gone-os-updater $out/bin/palin-gone-os-updater
-            chmod +x $out/bin/palin-gone-os-updater
+  installPhase = ''
+  mkdir -p $out/bin $out/share/applications $out/etc/xdg/autostart
+  cp $src/bin/palin-gone-os-updater $out/bin/palin-gone-os-updater
+  chmod +x $out/bin/palin-gone-os-updater
 
-            if [ -d "$src/share/applications" ]; then
-              cp -r $src/share/applications/* $out/share/applications/
-            fi
+  if [ -d "$src/share/applications" ]; then
+    cp -r $src/share/applications/* $out/share/applications/
+    cp -r $src/share/applications/* $out/etc/xdg/autostart/
+  fi
 
-            wrapProgram $out/bin/palin-gone-os-updater \
-              --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath [
-                pkgs.wayland
-                pkgs.libxkbcommon
-                pkgs.libglvnd
-                pkgs.stdenv.cc.cc.lib
-                pkgs.xorg.libX11
-                pkgs.xorg.libXcursor
-                pkgs.xorg.libXrandr
-                pkgs.xorg.libXi
-              ]}"
-          '';
-        };
-
-        defaultPackage = self.packages.${system}.palin-gone-os-updater;
-      }
-    );
-}
+  # Inscrire dans le wrapper les bibliothèques requises
+  wrapProgram $out/bin/palin-gone-os-updater \
+    --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath [
+      pkgs.wayland
+      pkgs.libxkbcommon
+      pkgs.libglvnd
+      pkgs.stdenv.cc.cc.lib
+      pkgs.xorg.libX11
+      pkgs.xorg.libXcursor
+      pkgs.xorg.libXrandr
+      pkgs.xorg.libXi
+    ]}"
+'';
