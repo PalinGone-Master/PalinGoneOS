@@ -43,12 +43,13 @@
                 pkgs.wayland
                 pkgs.libxkbcommon
                 pkgs.libglvnd
+                pkgs.mesa
                 pkgs.stdenv.cc.cc.lib
                 pkgs.libx11
                 pkgs.libxcursor
                 pkgs.libxi
                 pkgs.libxrandr
-              ]}"
+            ]}"
           '';
         };
 
