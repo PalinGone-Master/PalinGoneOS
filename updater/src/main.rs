@@ -3,9 +3,6 @@ use iced::{Alignment, Element, Length, Sandbox, Settings, Size, Theme};
 use std::process::{Command, Stdio};
 
 pub fn main() -> iced::Result {
-    // Forcer le backend de rendu OpenGL si Vulkan échoue
-    std::env::set_var("WGPU_BACKEND", "gl");
-
     UpdaterApp::run(Settings {
         window: iced::window::Settings {
             size: Size::new(650.0, 500.0),
