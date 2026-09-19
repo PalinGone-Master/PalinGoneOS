@@ -22,6 +22,10 @@
             pkgs.wayland
             pkgs.libglvnd
             pkgs.stdenv.cc.cc.lib
+            pkgs.xorg.libX11
+            pkgs.xorg.libXcursor
+            pkgs.xorg.libXrandr
+            pkgs.xorg.libXi
           ];
 
           installPhase = ''
@@ -35,6 +39,10 @@
                 pkgs.libxkbcommon
                 pkgs.libglvnd
                 pkgs.stdenv.cc.cc.lib
+                pkgs.xorg.libX11
+                pkgs.xorg.libXcursor
+                pkgs.xorg.libXrandr
+                pkgs.xorg.libXi
               ]}"
           '';
         };
