@@ -418,7 +418,7 @@ impl Application for UpdaterApp {
             State::Available { current, latest } => column![
                 Space::with_height(Length::Fixed(20.0)),
                 text("Une nouvelle mise à jour système est disponible !").size(16),
-                text(format!("{current}  ➜  {latest}")).size(14),
+                text(format!("de la version {current} vers la version {latest}")).size(14),
                 Space::with_height(Length::Fixed(10.0)),
                 text(
                     "L'opération peut durer plusieurs minutes.\n\
