@@ -11,6 +11,8 @@
 
     # L'updater de PalinGoneOS (Chemin relatif local au dépôt /etc/nixos)
     palingoneos-updater.url = "path:./updater";
+    # Même version de nixpkgs partout (évite un second téléchargement et des écarts de compilateur)
+    palingoneos-updater.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   # Production du flake
@@ -30,7 +32,7 @@
         nix-flatpak.nixosModules.nix-flatpak
 
         {
-          system.configurationRevision = self.rev or self.dirtyRev;
+          system.configurationRevision = self.rev or self.dirtyRev or "unknown";
         }
       ];
     };

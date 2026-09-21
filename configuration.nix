@@ -1,114 +1,100 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# Configuration principale de PalinGoneOS.
+# Aide : `man configuration.nix`, https://search.nixos.org/options et `nixos-help`.
 
 #========================================================================================================
 #                                            PalinGoneOS
 #========================================================================================================
 
-
 { config, lib, pkgs, inputs, ... }:
 
- 
 {
- # Activation de Nix Experimental
- nix.settings.experimental-features = [
-  "nix-command"
-  "flakes"
- ];
+  imports = [
+    ./hardware-configuration.nix   # propre à chaque machine
+    ./palingoneos-update.nix       # service de mise à jour (polkit)
+    ./branding.nix                 # nom, version, fond d'écran, démarrage, fastfetch
+    ./dev-tools.nix                # outils de développement (machine du créateur seulement)
+  ];
 
- # Activation "Maximiser et minimiser" GTK 3+4
-  systemd.user.services.palingoneos-dconf-buttons = {
-   description = "PalinGoneOS - GTK window buttons";
+  #==============================================================================================================================
+  # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
+  #==============================================================================================================================
+  palingoneos.version = "0.31.4";
 
-   wantedBy = [ "graphical-session.target" ];
-   after = [ "graphical-session.target" ];
+  # Activation de Nix Experimental
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
-   serviceConfig = {
-     Type = "oneshot";
-     ExecStart = "${pkgs.dconf}/bin/dconf write /org/gnome/desktop/wm/preferences/button-layout \"':minimize,maximize,close'\"";
-   };
- };
-  
-
-
- 
-
- #============================
- # Fastfetch PalinGoneOS
- #============================
- environment.etc."palingoneos/ascii.txt".source = ./branding/ascii.txt;
- environment.etc."fastfetch/config.jsonc".text = builtins.toJSON {
-    logo = {
-      source = "/etc/palingoneos/ascii.txt";
-      color = {
-        "1" = "bright_magenta";
-      };
-      padding = {
-        top = 0;
-        left = 1;
-        right = 3;
-      };
-    };
-    display = {
-      color = {
-        keys = "magenta";
-        title = "bright_magenta";
-      };
-      separator = " ➜ ";
-    };
-    modules = [
-      "title"
-      "separator"
-      {
-        type = "os";
-        key = "OS";
-        format = "PalinGoneOS ({3})";
-      }
-      "host"
-      "kernel"
-      "uptime"
-      "packages"
-      "shell"
-      "desktop"
-      "terminal"
-      "cpu"
-      "gpu"
-      "memory"
-      "break"
-      "colors"
-    ];
+  # Nettoyage automatique : sans ça, le disque se remplit à chaque mise à jour.
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
   };
- 
- imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ./palingoneos-update.nix
-    ];
-  # Paquet Non Libre
+  nix.optimise.automatic = true;
+
+  # Activation "Maximiser et minimiser" GTK 3+4
+  systemd.user.services.palingoneos-dconf-buttons = {
+    description = "PalinGoneOS - GTK window buttons";
+
+    wantedBy = [ "graphical-session.target" ];
+    after = [ "graphical-session.target" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.dconf}/bin/dconf write /org/gnome/desktop/wm/preferences/button-layout \"':minimize,maximize,close'\"";
+    };
+  };
+
+  # Paquet Non Libre (Steam, etc.)
   nixpkgs.config.allowUnfree = true;
-  # Use the systemd-boot EFI boot loader.
+
+  #==========================================
+  # Démarrage
+  #==========================================
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.systemd-boot.configurationLimit = 8 ; 
-  networking.hostName = "palingoneos"; # Define your hostname.
+  boot.loader.systemd-boot.configurationLimit = 8;
 
-  # Configure network connections interactively with nmcli or nmtui.
+  #==========================================
+  # Matériel
+  #==========================================
+  hardware.graphics.enable = true;
+  # Pilotes/firmwares propriétaires redistribuables (Wi-Fi, Bluetooth… sur vraie machine).
+  hardware.enableRedistributableFirmware = true;
+  # Swap compressé en RAM (aucun swap n'est défini sur le disque).
+  zramSwap.enable = true;
+
+  #==========================================
+  # Réseau et sécurité
+  #==========================================
+  networking.hostName = "palingoneos";
   networking.networkmanager.enable = true;
-  # Set your time zone.
+
+  # Pare-feu actif : aucun port entrant n'est ouvert.
+  networking.firewall.enable = true;
+
+  # SSH DÉSACTIVÉ : il n'est pas utile sur un poste familial et exposait le compte utilisateur.
+  # Pour le réactiver, utiliser UNIQUEMENT des clés (jamais de mot de passe) :
+  #   services.openssh.enable = true;
+  #   services.openssh.settings.PasswordAuthentication = false;
+  #   services.openssh.settings.PermitRootLogin = "no";
+  services.openssh.enable = false;
+
+  # sudo : mot de passe obligatoire, réservé au groupe wheel.
+  # (La mise à jour du système passe par palingoneos-update.nix, sans règle NOPASSWD.)
+  security.sudo.wheelNeedsPassword = true;
+  security.sudo.execWheelOnly = true;
+  security.polkit.enable = true;
+
+  #==========================================
+  # Langue, heure, clavier
+  #==========================================
   time.timeZone = "Europe/Paris";
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Select internationalisation properties.
   i18n.defaultLocale = "fr_FR.UTF-8";
-  console = {
-  #   font = "Lat2-Terminus16";
-    keyMap = "fr";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  };
+  console.keyMap = "fr";
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "fr_FR.UTF-8";
     LC_IDENTIFICATION = "fr_FR.UTF-8";
@@ -120,53 +106,18 @@
     LC_TELEPHONE = "fr_FR.UTF-8";
     LC_TIME = "fr_FR.UTF-8";
   };
-  # Enable the X11 windowing system.
-  # services.xserver.enable = true;
-
-
-  
-
-  # Configure keymap in X11
   services.xserver.xkb.layout = "fr";
-  # services.xserver.xkb.options = "eurosign:e,caps:escape";
 
-  # Enable CUPS to print documents.
-  # services.printing.enable = true;
-
-  # Enable sound.
-  # services.pulseaudio.enable = true;
-  # OR
-  # services.pipewire = {
-  #   enable = true;
-  #   pulse.enable = true;
-  # };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
+  #==========================================
+  # Utilisateur
+  #==========================================
+  # Aucun mot de passe dans ce fichier : le dépôt est PUBLIC.
+  # Le mot de passe se change avec la commande `passwd`.
   users.users.palingone = {
     isNormalUser = true;
     description = "PalinGone";
     extraGroups = [ "wheel" "networkmanager" ];
-    initialPassword = "palingone" ;
-  # Enable ‘sudo’ for the user.
-  #   packages = with pkgs; [
-  #     tree
-  #   ];
   };
- # Navigateur.
-  programs.firefox = {
-    enable = true;
-    languagePacks = [ "fr" ];
-    policies = {
-      RequestedLocales = [ "fr" ];
-    };
-    preferences = {
-      "browser.nova.enabled" = true;
-    };
-  };
-
 
   # Définition propre du shell par défaut pour tous les futurs utilisateurs de votre OS
   users.defaultUserShell = pkgs.bash;
@@ -178,41 +129,35 @@
     "/run/current-system/sw/bin/sh"
   ];
 
-  # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
-   environment.systemPackages = with pkgs; [
-    # Systeme de base
-    vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-    wget
+  #==========================================
+  # Applications
+  #==========================================
+  # Navigateur.
+  programs.firefox = {
+    enable = true;
+    languagePacks = [ "fr" ];
+    policies = {
+      RequestedLocales = [ "fr" ];
+    };
+    preferences = {
+      "browser.nova.enabled" = true;
+    };
+  };
+
+  environment.systemPackages = with pkgs; [
+    # Système de base
+    vim
     nano
-    git
+    wget
     curl
+    git
     htop
     fastfetch
-    gh
-    htop
     gsettings-desktop-schemas
-    rustc
-    cargo
-    just
-    cargo-generate
-    helix
-    gcc
-    pkg-config
-    libxkbcommon.dev
-    
 
-    
+    # L'updater de PalinGoneOS
+    inputs.palingoneos-updater.packages.${pkgs.stdenv.hostPlatform.system}.palin-gone-os-updater
 
-
-
-
-    # Config Avec Commande
-    
-
-    
-
-  inputs.palingoneos-updater.packages.${pkgs.system}.palin-gone-os-updater
     # Suite Bureautique
     libreoffice
 
@@ -221,168 +166,36 @@
     wine
     lutris
 
-    # Environnement de bureau Cosmic pour PalinGoneOS
+    # Magasin d'applications COSMIC
     cosmic-store
   ];
 
-  # Configuration système par défaut pour le panneau supérieur COSMIC
-  environment.etc."cosmic/com.system76.CosmicPanel.Panel/v1/plugins_right".text = ''
-    Some([
-      "com.system76.CosmicAppletSystemNotification",
-      "com.system76.CosmicAppletTime",
-      "palin-gone-os-updater"
-    ])
-  '';
-
-
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
-  # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
-
-
-
-  #==============================================================================================================================
-  # Information Distribution
-  #==============================================================================================================================
-
-
-  system.nixos.distroName = "PalinGoneOS";
-  system.nixos.label = "PalinGoneOS_0.31.3";
-  system.stateVersion = "26.05";
-  environment.etc."palingoneos/version".text = "0.31.3";
-
-  #==========================================
-  # Plymouth
-  #==========================================
-
-  
-  boot.plymouth = {
-    enable = true;
-    theme = "palingoneos";
-    themePackages = [
-      (pkgs.stdenv.mkDerivation {
-        name = "plymouth-theme-palingoneos";
-        src = ./branding/plymouth;
-        installPhase = ''
-          mkdir -p $out/share/plymouth/themes/palingoneos
-          cp -r * $out/share/plymouth/themes/palingoneos/
-          
-          # Ajustement des chemins pour le Store Nix
-          sed -i "s|ImageDir=.*|ImageDir=$out/share/plymouth/themes/palingoneos|" $out/share/plymouth/themes/palingoneos/palingoneos.plymouth
-          sed -i "s|ScriptFile=.*|ScriptFile=$out/share/plymouth/themes/palingoneos/palingoneos.script|" $out/share/plymouth/themes/palingoneos/palingoneos.plymouth
-        '';
-      })
-    ];
-   };
-  
-  # Options du noyau pour un boot silencieux
-  boot.kernelParams = [ "quiet" "splash" "loglevel=3" "rd.systemd.show_status=false" ];
-  boot.consoleLogLevel = 0;
-  
-  
-  
-  # Fond d'écran PalinGoneOS
-
-
-  environment.etc."palingoneos/wallpaper.png".source =
-    ./branding/wallpaper.png;
-
-  environment.etc."skel/.config/cosmic/com.system76.CosmicBackground/v1/all".text = ''
-  (
-      output: "all",
-      source: Path("/etc/palingoneos/wallpaper.png"),
-      filter_by_theme: true,
-      rotation_frequency: 300,
-      filter_method: Lanczos,
-      scaling_mode: Zoom,
-      sampling_method: Alphanumeric,
-  )
-  '';
-
-  environment.etc."skel/.config/cosmic/com.system76.CosmicBackground/v1/same-on-all".text = ''
-  true
-  '';
-
+  # STEAM
+  programs.steam.enable = true;
 
   # COSMIC Desktop
   services.displayManager.cosmic-greeter.enable = true;
   services.desktopManager.cosmic.enable = true;
-  security.polkit.enable = true;
-
 
   # ==========================
   # FLATPAK / FLATHUB
   # ==========================
   services.flatpak.enable = true;
-  
-  # Depot Officiel PalinGoneOS
+
+  # Dépôts Flatpak PalinGoneOS
   services.flatpak.remotes = [
-    #Flathub
+    # Flathub
     {
       name = "flathub";
       location = "https://dl.flathub.org/repo/flathub.flatpakrepo";
     }
-   # Applets COSMIC
-   {
-    name = "cosmic";
-    location = "https://apt.pop-os.org/cosmic/cosmic.flatpakrepo";
-   }
+    # Applets COSMIC
+    {
+      name = "cosmic";
+      location = "https://apt.pop-os.org/cosmic/cosmic.flatpakrepo";
+    }
   ];
 
-  
-  # STEAM
-  programs.steam.enable = true;
-
-  # Support Graphique
-  hardware.graphics.enable = true;
-
-  # Lancement de fastfetch à l'ouverture du terminal
-  programs.bash = {
-    interactiveShellInit = "
-      if [[ $- == *i* ]]; then
-	${pkgs.fastfetch}/bin/fastfetch
-      fi
-   ";
-  };
-
+  # Version de compatibilité des données : NE JAMAIS la modifier après l'installation.
+  system.stateVersion = "26.05";
 }
-
