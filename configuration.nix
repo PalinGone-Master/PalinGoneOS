@@ -12,6 +12,9 @@
     ./hardware-configuration.nix   # propre à chaque machine
     ./palingoneos-update.nix       # service de mise à jour (polkit)
     ./branding.nix                 # nom, version, fond d'écran, démarrage, fastfetch
+    ./gaming.nix                   # Steam, Proton, Wine, Lutris, Heroic
+    ./remote.nix                   # Remmina, RustDesk
+    ./system-tuning.nix            # recommandations NixOS (disque, impression, compatibilité)
     ./dev-tools.nix                # outils de développement (machine du créateur seulement)
   ];
 
@@ -73,6 +76,8 @@
   networking.networkmanager.enable = true;
 
   # Pare-feu actif : aucun port entrant n'est ouvert.
+  # Backend nftables : le successeur moderne d'iptables (règles plus rapides et plus lisibles).
+  networking.nftables.enable = true;
   networking.firewall.enable = true;
 
   # SSH DÉSACTIVÉ : il n'est pas utile sur un poste familial et exposait le compte utilisateur.
@@ -161,17 +166,9 @@
     # Suite Bureautique
     libreoffice
 
-    # Compatibilité Windows et Jeux
-    winetricks
-    wine
-    lutris
-
     # Magasin d'applications COSMIC
     cosmic-store
   ];
-
-  # STEAM
-  programs.steam.enable = true;
 
   # COSMIC Desktop
   services.displayManager.cosmic-greeter.enable = true;
