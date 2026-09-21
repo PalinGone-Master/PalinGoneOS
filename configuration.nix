@@ -83,6 +83,7 @@
  imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./palingoneos-update.nix
     ];
   # Paquet Non Libre
   nixpkgs.config.allowUnfree = true;
@@ -154,21 +155,6 @@
   #     tree
   #   ];
   };
-  security.sudo = {
-   enable = true;
-   wheelNeedsPassword = true;
-   extraRules = [
-     {
-       groups = [ "wheel" ];
-       commands = [
-         {
-           command = "/run/current-system/sw/bin/nixos-rebuild";
-           options = [ "NOPASSWD" ];
-         }
-       ];
-     }
-   ];
- };
  # Navigateur.
   programs.firefox = {
     enable = true;
@@ -224,20 +210,6 @@
     # Config Avec Commande
     
 
-    (pkgs.writeShellScriptBin "palingoneos-update-helper" ''
-          set -euo pipefail
-
-          VERSION="''${1:-}"
-
-          if [ -n "$VERSION" ]; then
-            echo "Basculement vers la version v$VERSION..."
-            git -C /etc/nixos fetch origin --tags --force
-            git -C /etc/nixos checkout -f "v$VERSION"
-          fi
-
-          exec /run/current-system/sw/bin/nixos-rebuild switch \
-            --flake /etc/nixos#palingoneos
-    '')
     
 
   inputs.palingoneos-updater.packages.${pkgs.system}.palin-gone-os-updater
@@ -314,9 +286,9 @@
 
 
   system.nixos.distroName = "PalinGoneOS";
-  system.nixos.label = "PalinGoneOS_0.30.10";
+  system.nixos.label = "PalinGoneOS_0.31.0";
   system.stateVersion = "26.05";
-  environment.etc."palingoneos/version".text = "0.30.10";
+  environment.etc."palingoneos/version".text = "0.31.0";
 
   #==========================================
   # Plymouth
