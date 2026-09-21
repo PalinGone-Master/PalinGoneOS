@@ -12,7 +12,7 @@
       {
         packages.palin-gone-os-updater = pkgs.rustPlatform.buildRustPackage {
           pname = "palin-gone-os-updater";
-          version = "1.1.0";
+          version = "1.2.0";
           src = ./.;
 
           cargoLock = {
