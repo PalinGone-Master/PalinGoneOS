@@ -12,5 +12,6 @@
     kdePackages.kdenlive   # montage vidéo (KDE)
     keepassxc    # gestionnaire de mots de passe, libre (GPLv2+)
     deja-dup     # sauvegarde de fichiers, libre (GPL) — interface simple, planification incluse
+    vlc          # lecteur vidéo, tous formats/codecs, libre (LGPL) — coexiste avec cosmic-player
   ];
 }
