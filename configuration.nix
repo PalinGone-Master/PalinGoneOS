@@ -16,12 +16,13 @@
     ./remote.nix                   # Remmina, RustDesk
     ./system-tuning.nix            # recommandations NixOS (disque, impression, compatibilité)
     ./dev-tools.nix                # outils de développement (machine du créateur seulement)
+    ./apps.nix			   # logiciels grand public (Thunderbird, Discord, WhatsApp, Kdenlive...)
   ];
 
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.7";
+  palingoneos.version = "0.31.8";
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
