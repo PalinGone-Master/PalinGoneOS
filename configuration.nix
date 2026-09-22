@@ -17,12 +17,13 @@
     ./system-tuning.nix            # recommandations NixOS (disque, impression, compatibilité)
     ./dev-tools.nix                # outils de développement (machine du créateur seulement)
     ./apps.nix			   # logiciels grand public (Thunderbird, Discord, WhatsApp, Kdenlive...)
+    ./virtualisation.nix           # VM Windows (KVM/QEMU) pour les logiciels sans équivalent Linux
   ];
 
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.10";
+  palingoneos.version = "0.31.11";
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
