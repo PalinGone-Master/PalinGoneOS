@@ -10,10 +10,10 @@
 
 use iced::futures::channel::{mpsc, oneshot};
 use iced::futures::{SinkExt, StreamExt};
-use iced::widget::{button, column, container, row, scrollable, text, Space};
+use iced::widget::{button, column, container, image, row, scrollable, text, Space};
 use iced::{
-    executor, subscription, Alignment, Application, Command, Element, Font, Length, Settings,
-    Size, Subscription, Theme,
+    executor, subscription, theme, Alignment, Application, Color, Command, Element, Font, Length,
+    Settings, Size, Subscription, Theme,
 };
 use std::any::TypeId;
 use std::fmt;
@@ -25,6 +25,37 @@ const VERSION_FILE: &str = "/etc/palingoneos/version";
 const FLAKE_DIR: &str = "/etc/nixos";
 const MAX_LOG_LINES: usize = 5000;
 
+/// Couleur de marque PalinGoneOS (le violet du losange et du "OS" du logo).
+const BRAND_PURPLE: Color = Color::from_rgb(0x7A as f32 / 255.0, 0.0, 0x7A as f32 / 255.0);
+
+/// Logo "PalinGoneOS" (losange + texte), affiché en haut de la fenêtre à la place
+/// du texte "Bienvenue sur PalinGoneOS". Pixels bruts (RGBA), préparés à l'avance
+/// depuis le logo officiel : pas de décodage d'image nécessaire au démarrage.
+const WORDMARK_BYTES: &[u8] = include_bytes!("../branding/wordmark-480x122.rgba");
+const WORDMARK_WIDTH: u32 = 480;
+const WORDMARK_HEIGHT: u32 = 122;
+
+/// Icône de la fenêtre (barre de titre / barre des tâches), même origine que le logo.
+const ICON_BYTES: &[u8] = include_bytes!("../branding/icon-128x128.rgba");
+const ICON_SIZE: u32 = 128;
+
+/// Thème sombre personnalisé : mêmes couleurs que le thème sombre par défaut d'iced,
+/// mais avec la couleur d'accent (boutons...) remplacée par le violet PalinGoneOS.
+fn brand_theme() -> Theme {
+    let dark = theme::Palette::DARK;
+    Theme::custom(
+        "PalinGoneOS".to_string(),
+        theme::Palette {
+            primary: BRAND_PURPLE,
+            ..dark
+        },
+    )
+}
+
+fn window_icon() -> Option<iced::window::Icon> {
+    iced::window::icon::from_rgba(ICON_BYTES.to_vec(), ICON_SIZE, ICON_SIZE).ok()
+}
+
 fn main() -> iced::Result {
     if std::env::var("WGPU_BACKEND").is_err() {
         std::env::set_var("WGPU_BACKEND", "vulkan,gl");
@@ -35,6 +66,7 @@ fn main() -> iced::Result {
             size: Size::new(650.0, 500.0),
             resizable: false,
             decorations: true,
+            icon: window_icon(),
             ..Default::default()
         },
         ..Default::default()
@@ -366,11 +398,19 @@ impl Application for UpdaterApp {
     }
 
     fn view(&self) -> Element<Message> {
+        let wordmark = image(image::Handle::from_pixels(
+            WORDMARK_WIDTH,
+            WORDMARK_HEIGHT,
+            WORDMARK_BYTES,
+        ))
+        .width(Length::Fixed(WORDMARK_WIDTH as f32 * 0.8))
+        .height(Length::Fixed(WORDMARK_HEIGHT as f32 * 0.8));
+
         let header = column![
-            text("Bienvenue sur PalinGoneOS").size(28),
+            wordmark,
             text("Centre de maintenance et de mise à jour du système").size(14),
         ]
-        .spacing(5)
+        .spacing(8)
         .align_items(Alignment::Center);
 
         let log_view = |logs: &[String]| {
@@ -489,7 +529,7 @@ impl Application for UpdaterApp {
     }
 
     fn theme(&self) -> Theme {
-        Theme::Dark
+        brand_theme()
     }
 }
 

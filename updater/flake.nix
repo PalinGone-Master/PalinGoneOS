@@ -41,6 +41,13 @@
               cp -r share/applications/* $out/etc/xdg/autostart/
             fi
 
+            # Icône PalinGoneOS (losange + P), à la place de l'icône générique système.
+            install -Dm644 ${./branding/icon-512.png} \
+              $out/share/icons/hicolor/512x512/apps/palin-gone-os-updater.png
+            for f in $out/share/applications/*.desktop $out/etc/xdg/autostart/*.desktop; do
+              sed -i "s|^Icon=.*|Icon=$out/share/icons/hicolor/512x512/apps/palin-gone-os-updater.png|" "$f"
+            done
+
 wrapProgram $out/bin/palin-gone-os-updater \
   --prefix PATH : "${pkgs.lib.makeBinPath [ pkgs.git pkgs.nixos-rebuild ]}" \
   --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath [
