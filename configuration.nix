@@ -30,7 +30,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.20";   # module NVIDIA (éteint par défaut) + réglages locaux par machine
+  palingoneos.version = "0.31.21";   # installateur (clé USB)
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
@@ -129,7 +129,7 @@
   # Le mot de passe se change avec la commande `passwd`.
   users.users.palingone = {
     isNormalUser = true;
-    description = "PalinGone";
+    description = lib.mkDefault "PalinGone";   # nom affiché ; chaque machine peut le changer dans /etc/palingoneos-local/machine.nix
     extraGroups = [ "wheel" "networkmanager" ];
   };
 

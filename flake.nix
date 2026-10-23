@@ -36,5 +36,12 @@
         }
       ];
     };
+
+    # Clé USB d'installation de PalinGoneOS (voir installer/iso.nix).
+    # Construire avec : nix build .#iso   →   result/iso/PalinGoneOS-installateur.iso
+    nixosConfigurations.installer = nixpkgs.lib.nixosSystem {
+      modules = [ ./installer/iso.nix ];
+    };
+    packages.x86_64-linux.iso = self.nixosConfigurations.installer.config.system.build.isoImage;
   };
 }
