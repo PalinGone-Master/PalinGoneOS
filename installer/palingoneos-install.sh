@@ -168,12 +168,21 @@ main() {
 
   #------------------------------------------
   titre "Étape 3/7 — Préparation du disque"
-  local p parts boot racine
+  local p parts boot racine verrou attente
   umount -R "$CIBLE" 2>/dev/null || true
   for p in $(lsblk -lnpo NAME "$disque" | tail -n +2); do
     umount "$p" 2>/dev/null || true
     swapoff "$p" 2>/dev/null || true
   done
+  udevadm settle
+
+  # VERROU sur le disque pendant le découpage et le formatage.
+  # Sans lui, le système (udev) relit le disque en arrière-plan juste après le
+  # découpage, recrée les partitions… et peut effacer le formatage en cours.
+  # Avec le verrou, il attend qu'on ait fini.
+  exec {verrou}<"$disque"
+  flock -x "$verrou"
+
   wipefs -af "$disque" >/dev/null
   # Table GPT : 1 Go pour le démarrage (UEFI), le reste pour le système.
   sfdisk --quiet --wipe always "$disque" <<'EOF'
@@ -181,17 +190,34 @@ label: gpt
 size=1GiB, type=U, name="BOOT"
 type=L, name="PALINGONEOS"
 EOF
-  partx -u "$disque" 2>/dev/null || true # fait relire la nouvelle table au système
-  udevadm settle
+  partx -u "$disque" 2>/dev/null || true # fait relire la nouvelle table au noyau
   mapfile -t parts < <(lsblk -lnpo NAME,TYPE "$disque" | awk '$2 == "part" { print $1 }')
   [ "${#parts[@]}" -eq 2 ] || stop "le disque n'a pas été découpé comme prévu."
   boot="${parts[0]}"
   racine="${parts[1]}"
+  # Attend (10 s au plus) que les deux partitions soient utilisables.
+  for attente in $(seq 1 20); do
+    if [ -b "$boot" ] && [ -b "$racine" ]; then break; fi
+    sleep 0.5
+  done
+  if ! [ -b "$boot" ] || ! [ -b "$racine" ]; then
+    stop "les partitions ne sont pas apparues ($attente essais)."
+  fi
   mkfs.fat -F 32 -n BOOT "$boot" >/dev/null
   mkfs.ext4 -F -q -L palingoneos "$racine"
-  mount "$racine" "$CIBLE"
+  sync
+
+  # Fin du verrou : le système peut relire le disque, tout est déjà écrit.
+  flock -u "$verrou"
+  exec {verrou}<&-
+  udevadm settle
+
+  # Vérification avant d'aller plus loin.
+  [ "$(blkid -p -s TYPE -o value "$racine" || true)" = "ext4" ] || stop "le formatage de $racine n'a pas tenu."
+  [ "$(blkid -p -s TYPE -o value "$boot" || true)" = "vfat" ] || stop "le formatage de $boot n'a pas tenu."
+  mount -t ext4 "$racine" "$CIBLE"
   mkdir -p "$CIBLE/boot"
-  mount -o fmask=0077,dmask=0077 "$boot" "$CIBLE/boot"
+  mount -t vfat -o fmask=0077,dmask=0077 "$boot" "$CIBLE/boot"
   info "Disque prêt : $boot (démarrage) et $racine (système)."
 
   #------------------------------------------
