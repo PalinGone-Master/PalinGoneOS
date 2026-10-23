@@ -10,6 +10,8 @@
 DEPOT="https://github.com/PalinGone-Master/PalinGoneOS"
 CIBLE="/mnt"
 LOCAL="$CIBLE/etc/palingoneos-local"
+# Mémoire de secours (fichier d'échange) utilisée seulement pendant l'installation.
+ECHANGE="$CIBLE/.echange-installation"
 
 #==========================================
 # Affichage
@@ -169,6 +171,7 @@ main() {
   #------------------------------------------
   titre "Étape 3/7 — Préparation du disque"
   local p parts boot racine verrou attente
+  swapoff "$ECHANGE" 2>/dev/null || true # reste d'un essai précédent
   umount -R "$CIBLE" 2>/dev/null || true
   for p in $(lsblk -lnpo NAME "$disque" | tail -n +2); do
     umount "$p" 2>/dev/null || true
@@ -266,8 +269,20 @@ EOF
     stop "/etc/palingoneos-local existe déjà sur la clé USB."
   fi
   ln -sfn "$LOCAL" /etc/palingoneos-local
+  # Mémoire de secours : Nix a besoin de plus de 4 Go de mémoire pour installer
+  # PalinGoneOS. Sans elle, sur un ordinateur avec peu de RAM, Linux arrête Nix
+  # en plein milieu (« Out of memory »). Fichier de 8 Go sur le nouveau disque,
+  # créé APRÈS la détection du matériel (sinon il serait noté dans la configuration)
+  # et supprimé à la fin.
+  if [ ! -e "$ECHANGE" ]; then
+    fallocate -l 8G "$ECHANGE"
+    chmod 600 "$ECHANGE"
+    mkswap "$ECHANGE" >/dev/null
+  fi
+  swapon "$ECHANGE"
   nixos-install --impure --no-root-passwd --no-channel-copy --flake "$CIBLE/etc/nixos#palingoneos"
-  rm -f /etc/palingoneos-local
+  swapoff "$ECHANGE"
+  rm -f "$ECHANGE" /etc/palingoneos-local
 
   #------------------------------------------
   titre "Mot de passe"

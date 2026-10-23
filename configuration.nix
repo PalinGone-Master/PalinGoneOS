@@ -30,7 +30,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.22";   # installateur : verrou du disque pendant le formatage
+  palingoneos.version = "0.31.23";   # installateur : mémoire de secours pendant l installation
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
