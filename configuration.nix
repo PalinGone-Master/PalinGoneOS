@@ -20,13 +20,17 @@
     ./virtualisation.nix           # VM Windows (KVM/QEMU) pour les logiciels sans équivalent Linux
     ./scheduler.nix                # Addon du kernel pour l'input lag en jeu et optimisations autonomie
     ./pgos-commands.nix    # commandes pgos-rebuild / pgos-switch / pgos-version
+    ./nvidia.nix                   # pilote NVIDIA propriétaire (éteint par défaut, allumé machine par machine)
+    ./local.nix                    # réglages propres à CETTE machine (/etc/palingoneos-local/machine.nix)
+    ./nvidia.nix                   # pilote NVIDIA propriétaire (éteint par défaut, allumé machine par machine)
+    ./local.nix                    # réglages propres à CETTE machine (/etc/palingoneos-local/machine.nix)
   
   ];
 
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.19";   # mise à jour des logiciels (nixpkgs, sécurité)
+  palingoneos.version = "0.31.20";   # module NVIDIA (éteint par défaut) + réglages locaux par machine
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
