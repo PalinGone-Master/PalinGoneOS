@@ -26,7 +26,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.18";   # fichier matériel sorti du dépôt (/etc/palingoneos-local/)
+  palingoneos.version = "0.31.19";   # mise à jour des logiciels (nixpkgs, sécurité)
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
