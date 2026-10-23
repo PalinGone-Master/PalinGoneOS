@@ -6,6 +6,7 @@ let
   # Utilise le même binaire nixos-rebuild que celui choisi par le système,
   # plutôt qu'un paquet nixpkgs générique.
   nixosRebuild = config.system.build.nixos-rebuild;
+  # --impure (plus bas) : autorise Nix à lire /etc/palingoneos-local/, en dehors du dépôt.
 
   pgosRebuild = pkgs.writeShellApplication {
     name = "pgos-rebuild";
@@ -16,7 +17,7 @@ let
         exit 0
       fi
       echo "==> Construction de test de PalinGoneOS (RIEN n'est activé sur cette machine)…"
-      sudo ${nixosRebuild}/bin/nixos-rebuild build --flake /etc/nixos#palingoneos
+      sudo ${nixosRebuild}/bin/nixos-rebuild build --impure --flake /etc/nixos#palingoneos
       echo "==> OK : la configuration compile correctement."
     '';
   };
@@ -30,7 +31,7 @@ let
         exit 0
       fi
       echo "==> Construction ET activation immédiate de PalinGoneOS sur cette machine…"
-      sudo ${nixosRebuild}/bin/nixos-rebuild switch --flake /etc/nixos#palingoneos
+      sudo ${nixosRebuild}/bin/nixos-rebuild switch --impure --flake /etc/nixos#palingoneos
     '';
   };
 

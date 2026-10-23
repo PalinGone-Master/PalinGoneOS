@@ -42,8 +42,21 @@ let
 
       git checkout --force "v$VERSION"
 
+      # Le fichier matériel (disques, pilotes) est propre à chaque machine.
+      # Il est soit encore dans le dépôt (anciennes versions), soit rangé dans
+      # /etc/palingoneos-local/ (versions récentes). S'il n'est nulle part,
+      # la construction échouerait : on s'arrête avant, avec un message clair.
+      if [ ! -f /etc/nixos/hardware-configuration.nix ] && \
+         [ ! -f /etc/palingoneos-local/hardware-configuration.nix ]; then
+        echo "==> ÉCHEC : fichier /etc/palingoneos-local/hardware-configuration.nix introuvable" >&2
+        echo "==> Retour à la version précédente" >&2
+        git checkout --force "$PREV"
+        exit 1
+      fi
+
       echo "==> Construction et activation du système (patience…)"
-      if ! /run/current-system/sw/bin/nixos-rebuild switch --flake /etc/nixos#palingoneos; then
+      # --impure : autorise Nix à lire /etc/palingoneos-local/, qui est en dehors du dépôt.
+      if ! /run/current-system/sw/bin/nixos-rebuild switch --impure --flake /etc/nixos#palingoneos; then
         echo "==> ÉCHEC : retour à la version précédente" >&2
         git checkout --force "$PREV"
         exit 1
