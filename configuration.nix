@@ -9,7 +9,7 @@
 
 {
   imports = [
-    ./hardware-configuration.nix   # propre à chaque machine
+    /etc/palingoneos-local/hardware-configuration.nix   # propre à chaque machine, HORS du dépôt (jamais touché par les mises à jour)
     ./palingoneos-update.nix       # service de mise à jour (polkit)
     ./branding.nix                 # nom, version, fond d'écran, démarrage, fastfetch
     ./gaming.nix                   # Steam, Proton, Wine, Lutris, Heroic
@@ -26,7 +26,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.17";   # préparation : fichier matériel hors du dépôt (--impure)
+  palingoneos.version = "0.31.18";   # fichier matériel sorti du dépôt (/etc/palingoneos-local/)
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
