@@ -16,14 +16,32 @@ ECHANGE="$CIBLE/.echange-installation"
 #==========================================
 # Affichage
 #==========================================
-titre() { printf '\n\033[1;35m=== %s ===\033[0m\n\n' "$*"; }
+ENTETE="Installation de PalinGoneOS"
+BILAN=() # étapes terminées, rappelées en haut de chaque écran
+
+# Nouvel écran : on efface tout, puis en-tête souligné, bilan, et titre de l'étape.
+ecran() {
+  clear || true
+  printf '\033[1;35m%s\n%s\033[0m\n\n' "$ENTETE" "${ENTETE//?/=}"
+  if [ "${#BILAN[@]}" -gt 0 ]; then
+    printf '  [OK] %s\n' "${BILAN[@]}"
+    echo
+  fi
+  if [ -n "${1:-}" ]; then printf '\033[1m%s\033[0m\n\n' "$1"; fi
+}
+fait() { BILAN+=("$1"); }
 info() { printf '%s\n' "$*"; }
 attention() { printf '\033[1;33m%s\033[0m\n' "$*"; }
 stop() {
-  printf '\n\033[1;31mERREUR : %s\033[0m\n' "$*" >&2
+  printf '\n\033[1;31mProblème : %s\033[0m\n' "$*" >&2
   exit 1
 }
-pause() { read -rp "Appuyez sur Entrée pour continuer… " _; }
+sur_erreur() { stop "l'installation s'est arrêtée à cause d'une erreur (ligne $1)."; }
+annuler() {
+  printf '\n\033[1;33m%s\033[0m\n' "Installation annulée : rien n'a été modifié."
+  exit 1
+}
+pause() { read -rp "${1:-Appuyez sur Entrée pour continuer...}" _; }
 
 # Nom affiché : lettres (accents compris), chiffres, espaces, apostrophes, points, tirets.
 # (Locale UTF-8 forcée ici pour que « é » compte comme une lettre quoi qu'il arrive.)
@@ -49,7 +67,8 @@ bus_id() {
   printf 'PCI:%d@%d:%d:%d' "$((16#$bus))" "$((16#$dom))" "$((16#$dev))" "$((16#$fn))"
 }
 
-# Écrit dans la variable NVIDIA_CONF les lignes NVIDIA de machine.nix (vide si aucune).
+# Remplit NVIDIA_CONF (lignes NVIDIA de machine.nix, vide si aucune)
+# et CARTE (phrase qui décrit la carte graphique pour l'écran).
 # Entrées : $1 = sortie de « lspci -D -nn », $2 = type de châssis (DMI).
 detecter_nvidia() {
   local lspci_sortie="$1" chassis="$2" cartes nv igpu puce legacy portable=0
@@ -58,7 +77,7 @@ detecter_nvidia() {
   cartes="$(grep -E 'VGA compatible controller|3D controller|Display controller' <<<"$lspci_sortie" || true)"
   nv="$(grep -F '[10de:' <<<"$cartes" | head -n 1 || true)"
   if [ -z "$nv" ]; then
-    info "Carte graphique : pas de NVIDIA → pilotes libres (Mesa), rien à régler."
+    CARTE="rien à installer"
     return 0
   fi
 
@@ -69,8 +88,7 @@ detecter_nvidia() {
       legacy=true # GTX 9xx / 10xx (Maxwell, Pascal, Volta) : pilote 580
       ;;
     GK* | GF* | GT* | G[0-9]* | NV*)
-      attention "Carte NVIDIA trop ancienne pour le pilote NVIDIA actuel ($puce) :"
-      attention "le pilote libre (nouveau) sera utilisé."
+      CARTE="NVIDIA ancienne, pilote libre"
       return 0
       ;;
     *)
@@ -96,9 +114,9 @@ detecter_nvidia() {
       NVIDIA_CONF+="  palingoneos.nvidia.prime.amdgpuBusId = \"$(bus_id "$igpu")\";
 "
     fi
-    info "Carte graphique : NVIDIA $puce + puce intégrée (portable) → pilote NVIDIA, mode économie (PRIME)."
+    CARTE="NVIDIA de portable, pilote officiel, mode économie"
   else
-    info "Carte graphique : NVIDIA ${puce:-récente} → pilote NVIDIA."
+    CARTE="NVIDIA, pilote officiel"
   fi
 }
 
@@ -107,69 +125,87 @@ detecter_nvidia() {
 #==========================================
 main() {
   set -E
-  trap 'stop "une étape a échoué (ligne $LINENO). Relancez avec : sudo palingoneos-install"' ERR
+  trap 'sur_erreur $LINENO' ERR
 
-  [ "$(id -u)" -eq 0 ] || stop "lancez l'installateur avec : sudo palingoneos-install"
-  [ -d /sys/firmware/efi ] || stop "la clé USB n'a pas démarré en mode UEFI. Redémarrez et choisissez l'entrée « UEFI » de la clé dans le menu de démarrage."
-
-  clear || true
-  titre "Installation de PalinGoneOS"
-  info "Cet assistant installe PalinGoneOS sur cet ordinateur."
-  info "Il faut : une connexion à Internet, et un disque d'au moins 64 Go qui sera ENTIÈREMENT effacé."
-  pause
+  [ "$(id -u)" -eq 0 ] || stop "il faut lancer l'installation avec la commande : sudo palingoneos-install"
+  if ! [ -d /sys/firmware/efi ]; then
+    stop "la clé n'a pas démarré en mode UEFI. Redémarrez l'ordinateur et, dans le menu
+           de démarrage, choisissez l'entrée de la clé qui commence par « UEFI »."
+  fi
 
   #------------------------------------------
-  titre "Étape 1/7 — Connexion à Internet"
+  ecran
+  info "Bienvenue ! Cet assistant va installer PalinGoneOS sur cet ordinateur,"
+  info "en 7 étapes."
+  echo
+  info "Avant de commencer, vérifiez que :"
+  info "  - l'ordinateur est branché sur secteur ;"
+  info "  - vous pouvez vous connecter à Internet (câble ou Wi-Fi) ;"
+  info "  - le disque ne contient plus rien d'important : il sera entièrement effacé."
+  echo
+  pause "Appuyez sur Entrée pour commencer..."
+
+  #------------------------------------------
   while ! git ls-remote --tags "$DEPOT" >/dev/null 2>&1; do
-    attention "Pas d'accès à Internet."
-    info "- Câble Ethernet : branchez-le, puis appuyez sur Entrée."
-    info "- Wi-Fi : une fenêtre va s'ouvrir. Choisissez votre réseau avec les flèches, Entrée,"
-    info "  tapez le mot de passe du Wi-Fi, puis allez sur « Quitter » (Échap)."
+    ecran "Étape 1/7 - Connexion à Internet"
+    attention "Cet ordinateur n'est pas connecté à Internet."
+    echo
+    info "  - Avec un câble : branchez-le, puis appuyez sur Entrée."
+    info "  - En Wi-Fi : appuyez sur Entrée, choisissez votre réseau avec les"
+    info "    flèches, validez avec Entrée, tapez le mot de passe du Wi-Fi,"
+    info "    puis quittez avec Échap."
+    echo
     pause
     nmtui connect || true
   done
-  info "Connexion à Internet : OK."
+  fait "Connexion à Internet"
 
   #------------------------------------------
-  titre "Étape 2/7 — Choix du disque"
-  local usb="" source_iso disques n disque octets go
+  ecran "Étape 2/7 - Choix du disque"
+  local usb="" source_iso disques n disque taille octets go
   source_iso="$(findmnt -no SOURCE /iso 2>/dev/null || true)"
   if [ -n "$source_iso" ]; then
     usb="$(lsblk -no PKNAME "$source_iso" 2>/dev/null | head -n 1 || true)"
   fi
   mapfile -t disques < <(lsblk -dpno NAME,TYPE | awk '$2 == "disk" { print $1 }' | grep -v -e '^/dev/zram' -e "^/dev/${usb:-AUCUN}\$" || true)
-  [ "${#disques[@]}" -gt 0 ] || stop "aucun disque trouvé."
+  [ "${#disques[@]}" -gt 0 ] || stop "aucun disque n'a été trouvé sur cet ordinateur."
 
-  info "Disques disponibles (la clé USB d'installation n'est pas proposée) :"
+  info "Disques trouvés (la clé USB n'apparaît pas dans la liste) :"
   for n in "${!disques[@]}"; do
     printf '  %d) %s   %s   %s\n' "$((n + 1))" "${disques[$n]}" \
       "$(lsblk -dno SIZE "${disques[$n]}" | xargs)" "$(lsblk -dno MODEL "${disques[$n]}" | xargs)"
   done
+  echo
   while true; do
-    read -rp "Numéro du disque où installer PalinGoneOS : " n
+    read -rp "Sur quel disque installer PalinGoneOS ? Tapez son numéro : " n
     if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -ge 1 ] && [ "$n" -le "${#disques[@]}" ]; then break; fi
-    info "Tapez un des numéros de la liste."
+    info "Ce numéro n'est pas dans la liste."
   done
   disque="${disques[$((n - 1))]}"
+  taille="$(lsblk -dno SIZE "$disque" | xargs)"
 
   octets="$(lsblk -bdno SIZE "$disque" | xargs)"
   go=$((octets / 1000 / 1000 / 1000))
-  [ "$go" -ge 64 ] || stop "ce disque est trop petit ($go Go). Il faut au moins 64 Go."
+  [ "$go" -ge 64 ] || stop "ce disque est trop petit ($go Go). Il en faut au moins 64."
   if [ "$go" -lt 120 ]; then
-    attention "Disque de $go Go : ça fonctionne, mais 128 Go ou plus sont conseillés (place pour les mises à jour)."
+    echo
+    attention "Ce disque fait $go Go. C'est suffisant, mais 128 Go ou plus sont conseillés"
+    attention "pour avoir de la place lors des mises à jour."
   fi
 
   echo
-  info "Contenu actuel de $disque :"
+  info "Voici ce que contient actuellement $disque :"
   lsblk -o NAME,SIZE,FSTYPE,LABEL "$disque"
   echo
-  attention "ATTENTION : TOUT le contenu de $disque va être EFFACÉ, définitivement."
+  attention "ATTENTION : tout ce qui se trouve sur $disque va être effacé définitivement."
   local confirmation
-  read -rp "Pour confirmer, tapez EFFACER (en majuscules) : " confirmation
-  [ "$confirmation" = "EFFACER" ] || stop "installation annulée. Rien n'a été modifié."
+  read -rp "Pour confirmer, tapez EFFACER en majuscules : " confirmation
+  [ "$confirmation" = "EFFACER" ] || annuler
+  fait "Disque choisi : $disque ($taille)"
 
   #------------------------------------------
-  titre "Étape 3/7 — Préparation du disque"
+  ecran "Étape 3/7 - Préparation du disque"
+  info "Préparation en cours..."
   local p parts boot racine verrou attente
   swapoff "$ECHANGE" 2>/dev/null || true # reste d'un essai précédent
   umount -R "$CIBLE" 2>/dev/null || true
@@ -195,7 +231,7 @@ type=L, name="PALINGONEOS"
 EOF
   partx -u "$disque" 2>/dev/null || true # fait relire la nouvelle table au noyau
   mapfile -t parts < <(lsblk -lnpo NAME,TYPE "$disque" | awk '$2 == "part" { print $1 }')
-  [ "${#parts[@]}" -eq 2 ] || stop "le disque n'a pas été découpé comme prévu."
+  [ "${#parts[@]}" -eq 2 ] || stop "le disque n'a pas pu être préparé correctement."
   boot="${parts[0]}"
   racine="${parts[1]}"
   # Attend (10 s au plus) que les deux partitions soient utilisables.
@@ -204,7 +240,7 @@ EOF
     sleep 0.5
   done
   if ! [ -b "$boot" ] || ! [ -b "$racine" ]; then
-    stop "les partitions ne sont pas apparues ($attente essais)."
+    stop "le disque n'a pas pu être préparé correctement ($attente essais)."
   fi
   mkfs.fat -F 32 -n BOOT "$boot" >/dev/null
   mkfs.ext4 -F -q -L palingoneos "$racine"
@@ -216,28 +252,31 @@ EOF
   udevadm settle
 
   # Vérification avant d'aller plus loin.
-  [ "$(blkid -p -s TYPE -o value "$racine" || true)" = "ext4" ] || stop "le formatage de $racine n'a pas tenu."
-  [ "$(blkid -p -s TYPE -o value "$boot" || true)" = "vfat" ] || stop "le formatage de $boot n'a pas tenu."
+  [ "$(blkid -p -s TYPE -o value "$racine" || true)" = "ext4" ] || stop "le disque n'a pas pu être préparé correctement ($racine)."
+  [ "$(blkid -p -s TYPE -o value "$boot" || true)" = "vfat" ] || stop "le disque n'a pas pu être préparé correctement ($boot)."
   mount -t ext4 "$racine" "$CIBLE"
   mkdir -p "$CIBLE/boot"
   mount -t vfat -o fmask=0077,dmask=0077 "$boot" "$CIBLE/boot"
-  info "Disque prêt : $boot (démarrage) et $racine (système)."
+  fait "Disque préparé"
 
   #------------------------------------------
-  titre "Étape 4/7 — Détection du matériel"
+  ecran "Étape 4/7 - Détection du matériel"
+  info "Détection en cours..."
   mkdir -p "$LOCAL"
   nixos-generate-config --root "$CIBLE" --show-hardware-config >"$LOCAL/hardware-configuration.nix" 2>/dev/null
-  info "Fichier matériel créé : /etc/palingoneos-local/hardware-configuration.nix"
   detecter_nvidia "$(lspci -D -nn)" "$(cat /sys/class/dmi/id/chassis_type 2>/dev/null || echo 0)"
+  fait "Matériel détecté"
+  fait "Carte graphique : $CARTE"
 
   #------------------------------------------
-  titre "Étape 5/7 — Nom de l'utilisateur"
+  ecran "Étape 5/7 - Votre nom"
   local nom
   while true; do
-    read -rp "Nom affiché sur l'écran de connexion (ex. : Papa, Marie) : " nom
+    read -rp "Quel nom afficher sur l'écran de connexion ? (par exemple : Papa, Marie) : " nom
     nom="${nom:-PalinGone}"
     if nom_valide "$nom"; then break; fi
-    info "Utilisez seulement des lettres, chiffres, espaces, apostrophes, points ou tirets."
+    info "Ce nom contient un caractère non accepté. Utilisez des lettres, des chiffres,"
+    info "des espaces, des apostrophes, des points ou des tirets."
   done
   {
     printf "# Réglages propres à CETTE machine, créés par l'installateur PalinGoneOS le %s.\n" "$(date +%d/%m/%Y)"
@@ -247,26 +286,28 @@ EOF
     printf '%s' "$NVIDIA_CONF"
     printf '}\n'
   } >"$LOCAL/machine.nix"
-  info "Réglages de la machine enregistrés : /etc/palingoneos-local/machine.nix"
+  fait "Nom affiché : « $nom »"
 
   #------------------------------------------
-  titre "Étape 6/7 — Téléchargement de PalinGoneOS"
+  ecran "Étape 6/7 - Téléchargement de PalinGoneOS"
+  info "Recherche de la dernière version..."
   local version
   git clone --quiet "$DEPOT" "$CIBLE/etc/nixos"
   version="$(git -C "$CIBLE/etc/nixos" tag --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
-  [ -n "$version" ] || stop "aucune version publiée de PalinGoneOS n'a été trouvée."
+  [ -n "$version" ] || stop "impossible de trouver une version de PalinGoneOS à télécharger."
   git -C "$CIBLE/etc/nixos" -c advice.detachedHead=false checkout --quiet "$version"
-  info "Version : $version"
+  fait "PalinGoneOS $version téléchargé"
 
   #------------------------------------------
-  titre "Étape 7/7 — Installation"
-  info "Téléchargement et installation de tous les logiciels."
-  info "Comptez de 30 minutes à plus d'une heure selon la connexion. Ne pas éteindre."
+  ecran "Étape 7/7 - Installation"
+  info "L'installation commence. Elle peut durer de 30 minutes à plus d'une heure,"
+  info "selon la vitesse de votre connexion."
+  attention "Laissez l'ordinateur allumé et branché jusqu'à la fin."
   echo
   # La configuration est lue depuis la clé USB pendant l'installation :
   # on lui montre le dossier local de la NOUVELLE machine.
   if [ -e /etc/palingoneos-local ] && [ ! -L /etc/palingoneos-local ]; then
-    stop "/etc/palingoneos-local existe déjà sur la clé USB."
+    stop "la clé USB contient déjà un dossier /etc/palingoneos-local."
   fi
   ln -sfn "$LOCAL" /etc/palingoneos-local
   # Mémoire de secours : Nix a besoin de plus de 4 Go de mémoire pour installer
@@ -283,19 +324,26 @@ EOF
   nixos-install --impure --no-root-passwd --no-channel-copy --flake "$CIBLE/etc/nixos#palingoneos"
   swapoff "$ECHANGE"
   rm -f "$ECHANGE" /etc/palingoneos-local
+  fait "Logiciels installés"
 
   #------------------------------------------
-  titre "Mot de passe"
-  info "Choisissez le mot de passe du compte. Il sera demandé à la connexion"
-  info "et pour les opérations d'administration. (Rien ne s'affiche pendant la saisie, c'est normal.)"
+  ecran "Mot de passe"
+  info "Choisissez maintenant le mot de passe de votre compte. Il vous sera demandé"
+  info "pour vous connecter et pour les réglages importants."
+  info "Rien ne s'affiche pendant que vous tapez : c'est normal."
+  echo
   until nixos-enter --root "$CIBLE" -c 'passwd palingone'; do
-    attention "Les deux saisies ne correspondent pas, recommencez."
+    echo
+    attention "Les deux mots de passe ne sont pas identiques. Recommencez."
+    echo
   done
+  fait "Mot de passe choisi"
 
   umount -R "$CIBLE"
-  titre "Installation terminée !"
-  info "Retirez la clé USB, puis appuyez sur Entrée pour redémarrer sur PalinGoneOS."
-  pause
+  ecran "C'est terminé !"
+  info "PalinGoneOS est installé."
+  echo
+  pause "Retirez la clé USB, puis appuyez sur Entrée : l'ordinateur va redémarrer."
   systemctl reboot
 }
 

@@ -1,0 +1,62 @@
+# PalinGoneOS — thème du menu de démarrage de la clé d'installation (GRUB).
+# Les polices (.pf2) sont fabriquées à la construction de l'ISO (voir installer/iso.nix).
+
+title-text: ""
+desktop-image: "background.png"
+desktop-image-scale-method: "crop"
+desktop-color: "#14001a"
+terminal-font: "DejaVu Sans Regular 20"
+
+# Logo PalinGoneOS (losange + nom).
++ image {
+  file = "logo.png"
+  left = 50%-278
+  top = 9%
+  width = 556
+  height = 160
+}
+
+# Le menu : panneau sombre arrondi, entrée choisie en violet.
+# (Hauteur prévue pour 4 entrées : GRUB n'affiche que les entrées qui tiennent en entier.)
++ boot_menu {
+  left = 50%-340
+  top = 36%
+  width = 680
+  height = 360
+  item_font = "DejaVu Sans Regular 24"
+  item_color = "#e6dce6"
+  selected_item_font = "DejaVu Sans Bold 24"
+  selected_item_color = "#ffffff"
+  item_height = 44
+  item_padding = 20
+  item_spacing = 20
+  icon_width = 0
+  icon_height = 0
+  item_icon_space = 0
+  menu_pixmap_style = "menu_*.png"
+  selected_item_pixmap_style = "select_*.png"
+  scrollbar = false
+}
+
+# Compte à rebours avant le démarrage automatique (barre violette).
++ progress_bar {
+  id = "__timeout__"
+  left = 50%-340
+  top = 36%+380
+  width = 680
+  height = 8
+  fg_color = "#7a007a"
+  bg_color = "#3a2a3a"
+  border_color = "#3a2a3a"
+}
+
+# Aide.
++ label {
+  left = 0
+  top = 36%+414
+  width = 100%
+  align = "center"
+  font = "DejaVu Sans Regular 20"
+  color = "#d8c8d8"
+  text = "↑ ↓  pour choisir      Entrée  pour démarrer"
+}
