@@ -30,7 +30,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.25";   # Google Chrome (Nix) + mise à jour automatique de nixpkgs
+  palingoneos.version = "0.31.26";   # mise à jour automatique des logiciels du 30/10/2026
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
