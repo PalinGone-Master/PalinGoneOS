@@ -1,0 +1,113 @@
+# PalinGoneOS — mise à jour automatique des logiciels (nixpkgs).
+#
+# Le 1er et le 15 de chaque mois (ou à la demande : onglet Actions → « Run workflow ») :
+#   1. met à jour flake.lock (nix flake update) ;
+#   2. s'il y a du nouveau, monte la version (ex. 0.31.25 → 0.31.26) ;
+#   3. construit le système COMPLET, comme `pgos-rebuild` : une fois en configuration
+#      standard, une fois avec le pilote NVIDIA 580 (machines GTX 9xx/10xx) ;
+#   4. SEULEMENT si tout se construit : enregistre, pose l'étiquette vX.Y.Z et publie.
+#      Les Centres de mise à jour proposent alors la nouvelle version.
+# Si une étape échoue, RIEN n'est publié et GitHub envoie un e-mail.
+
+name: Mise à jour automatique de nixpkgs
+
+on:
+  schedule:
+    - cron: "17 3 1,15 * *" # le 1er et le 15 du mois, à 3 h 17 UTC (nuit en France)
+  workflow_dispatch: # bouton « Run workflow » pour la lancer à la main
+
+permissions:
+  contents: write # nécessaire pour publier le commit et l'étiquette
+
+concurrency:
+  group: maj-nixpkgs
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  mise-a-jour:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Libérer de la place (le système complet pèse environ 25 Go)
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Installer Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Mettre à jour les logiciels (flake.lock)
+        id: maj
+        run: |
+          nix flake update
+          if git diff --quiet flake.lock; then
+            echo "Rien de nouveau dans nixpkgs : aucune version publiée."
+            echo "nouveau=non" >> "$GITHUB_OUTPUT"
+          else
+            git diff --stat flake.lock
+            echo "nouveau=oui" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Monter la version
+        id: version
+        if: steps.maj.outputs.nouveau == 'oui'
+        run: |
+          date_maj="$(date +%d/%m/%Y)"
+          nouvelle="$(bash .github/ci/monter-version.sh configuration.nix "mise à jour automatique des logiciels du $date_maj")"
+          echo "Nouvelle version : $nouvelle"
+          echo "nouvelle=$nouvelle" >> "$GITHUB_OUTPUT"
+          echo "date=$date_maj" >> "$GITHUB_OUTPUT"
+
+      - name: Préparer une machine fictive (fichier matériel)
+        if: steps.maj.outputs.nouveau == 'oui'
+        run: |
+          sudo mkdir -p /etc/palingoneos-local
+          sudo cp .github/ci/hardware-configuration.nix /etc/palingoneos-local/hardware-configuration.nix
+
+      - name: Construire le système (configuration standard)
+        if: steps.maj.outputs.nouveau == 'oui'
+        run: |
+          nix build --impure --no-link --keep-going \
+            .#nixosConfigurations.palingoneos.config.system.build.toplevel
+
+      - name: Construire le système (avec le pilote NVIDIA 580)
+        if: steps.maj.outputs.nouveau == 'oui'
+        run: |
+          sudo cp .github/ci/machine-nvidia.nix /etc/palingoneos-local/machine.nix
+          nix build --impure --no-link --keep-going \
+            .#nixosConfigurations.palingoneos.config.system.build.toplevel
+          sudo rm -f /etc/palingoneos-local/machine.nix
+
+      - name: Publier la nouvelle version
+        if: steps.maj.outputs.nouveau == 'oui'
+        env:
+          NOUVELLE: ${{ steps.version.outputs.nouvelle }}
+          DATE_MAJ: ${{ steps.version.outputs.date }}
+        run: |
+          git config user.name "PalinGoneOS (mise à jour automatique)"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.lock configuration.nix
+          git commit -m "v$NOUVELLE : mise à jour automatique des logiciels du $DATE_MAJ"
+          git tag "v$NOUVELLE"
+          git push origin main
+          git push origin "v$NOUVELLE"
+          echo "Version v$NOUVELLE publiée."
