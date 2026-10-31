@@ -20,8 +20,7 @@
     ./virtualisation.nix           # VM Windows (KVM/QEMU) pour les logiciels sans équivalent Linux
     ./scheduler.nix                # Addon du kernel pour l'input lag en jeu et optimisations autonomie
     ./pgos-commands.nix    # commandes pgos-rebuild / pgos-switch / pgos-version
-    ./nvidia.nix                   # pilote NVIDIA propriétaire (éteint par défaut, allumé machine par machine)
-    ./local.nix                    # réglages propres à CETTE machine (/etc/palingoneos-local/machine.nix)
+    ./utilisateur.nix              # compte principal : identifiant et nom affiché (réglables par machine)
     ./nvidia.nix                   # pilote NVIDIA propriétaire (éteint par défaut, allumé machine par machine)
     ./local.nix                    # réglages propres à CETTE machine (/etc/palingoneos-local/machine.nix)
   
@@ -30,7 +29,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.26";   # mise à jour automatique des logiciels du 30/10/2026
+  palingoneos.version = "0.31.27";   # compte et nom de machine personnalisables
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
@@ -81,7 +80,9 @@
   #==========================================
   # Réseau et sécurité
   #==========================================
-  networking.hostName = "palingoneos";
+  # Nom de la machine sur le réseau. Chaque machine peut avoir le sien (l'installateur
+  # l'écrit dans /etc/palingoneos-local/machine.nix) ; sinon « palingoneos ».
+  networking.hostName = lib.mkDefault "palingoneos";
   networking.networkmanager.enable = true;
 
   # Pare-feu actif : aucun port entrant n'est ouvert.
@@ -125,13 +126,8 @@
   #==========================================
   # Utilisateur
   #==========================================
-  # Aucun mot de passe dans ce fichier : le dépôt est PUBLIC.
-  # Le mot de passe se change avec la commande `passwd`.
-  users.users.palingone = {
-    isNormalUser = true;
-    description = lib.mkDefault "PalinGone";   # nom affiché ; chaque machine peut le changer dans /etc/palingoneos-local/machine.nix
-    extraGroups = [ "wheel" "networkmanager" ];
-  };
+  # Le compte principal est décrit dans utilisateur.nix (identifiant et nom affiché
+  # réglables par machine).
 
   # Définition propre du shell par défaut pour tous les futurs utilisateurs de votre OS
   users.defaultUserShell = pkgs.bash;

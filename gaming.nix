@@ -29,8 +29,8 @@
   # Micro-compositeur pour les jeux (mise à l'échelle, FSR). Usage : gamescope -- %command%
   programs.gamescope.enable = true;
 
-  # gamemode exige d'appartenir à ce groupe (à ajouter aussi aux futurs comptes créés par l'ISO).
-  users.users.palingone.extraGroups = [ "gamemode" ];
+  # gamemode exige d'appartenir à ce groupe (compte principal de la machine, voir utilisateur.nix).
+  users.users.${config.palingoneos.utilisateur.identifiant}.extraGroups = [ "gamemode" ];
 
   # CORRECTIF TEMPORAIRE (octobre 2026) pour Lutris.
   # Lutris utilise une petite bibliothèque Python, pyrate-limiter. Dans la version actuelle

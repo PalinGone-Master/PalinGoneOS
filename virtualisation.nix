@@ -5,7 +5,7 @@
 # de diagnostic dans la VM une fois Windows démarré : menu de la fenêtre de la VM
 # → Virtual Machine → Redirect USB device. Aucune manipulation Nix nécessaire,
 # et aucun mot de passe à chaque branchement (géré par la règle polkit du module).
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   virtualisation.libvirtd = {
@@ -23,5 +23,5 @@
 
   # Accès à virt-manager sans mot de passe à chaque fois (la règle polkit du module
   # libvirtd n'autorise que les membres de ce groupe).
-  users.users.palingone.extraGroups = [ "libvirtd" ];
+  users.users.${config.palingoneos.utilisateur.identifiant}.extraGroups = [ "libvirtd" ];
 }

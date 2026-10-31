@@ -5,7 +5,8 @@
 # Pour le relancer à la main : sudo palingoneos-install
 #
 # Étapes : Internet → choix du disque → préparation du disque → détection du matériel
-#          → nom de l'utilisateur → téléchargement de PalinGoneOS → installation → mot de passe.
+#          → compte (nom affiché, identifiant, nom de la machine) → téléchargement de PalinGoneOS
+#          → installation → mot de passe.
 
 DEPOT="https://github.com/PalinGone-Master/PalinGoneOS"
 CIBLE="/mnt"
@@ -48,6 +49,40 @@ pause() { read -rp "${1:-Appuyez sur Entrée pour continuer...}" _; }
 nom_valide() {
   local LC_ALL=C.UTF-8
   [[ "$1" =~ ^[[:alnum:]\ \'._-]{1,40}$ ]]
+}
+
+# Propose un identifiant à partir du nom affiché : « Marie-José » → « marie-jose ».
+# (Minuscules, accents retirés, autres caractères remplacés par des tirets.)
+identifiant_depuis() {
+  local -x LC_ALL=C.UTF-8 # -x : transmis aussi à sed et tr
+  local s
+  s="$(printf '%s' "$1" | sed -e 's/[àâäáãåÀÂÄÁÃÅ]/a/g; s/[çÇ]/c/g; s/[éèêëÉÈÊË]/e/g' \
+    -e 's/[îïíìÎÏÍÌ]/i/g; s/[ôöóòõÔÖÓÒÕ]/o/g; s/[ùûüúÙÛÜÚ]/u/g; s/[ÿýŸÝ]/y/g' \
+    -e 's/[ñÑ]/n/g; s/[œŒ]/oe/g; s/[æÆ]/ae/g')"
+  s="$(printf '%s' "$s" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-' |
+    sed -e 's/--*/-/g; s/^[-0-9]*//; s/-*$//' | cut -c1-30)"
+  printf '%s' "${s:-utilisateur}"
+}
+
+# Identifiant : minuscule au début, puis minuscules, chiffres, « - » ou « _ » (31 au plus),
+# et pas un nom déjà pris par le système (comptes et groupes de NixOS).
+identifiant_valide() {
+  [[ "$1" =~ ^[a-z][a-z0-9_-]{0,30}$ ]] || return 1
+  case "$1" in
+    root | admin | nixos | nobody | nogroup | users | wheel | nixbld* | systemd-* | \
+      avahi | cosmic-greeter | greeter | cups | flatpak | fwupd-refresh | geoclue | messagebus | \
+      nm-iodine | nm-openvpn | nscd | polkituser | qemu-libvirtd | libvirtd | rpc | rtkit | \
+      wpa_supplicant | adm | audio | cdrom | clock | dialout | disk | floppy | gamemode | input | \
+      keys | kmem | kvm | lp | lpadmin | networkmanager | pipewire | render | resolvconf | sgx | \
+      shadow | tape | tty | utmp | uucp | video)
+      return 1
+      ;;
+  esac
+}
+
+# Nom de machine : minuscules, chiffres et tirets (pas au début ni à la fin), 63 au plus.
+machine_valide() {
+  [[ "$1" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] && [ "$1" != "localhost" ]
 }
 
 #==========================================
@@ -269,24 +304,54 @@ EOF
   fait "Carte graphique : $CARTE"
 
   #------------------------------------------
-  ecran "Étape 5/7 - Votre nom"
-  local nom
+  ecran "Étape 5/7 - Votre compte"
+  local nom identifiant machine proposition
+  # Nom affiché
   while true; do
-    read -rp "Quel nom afficher sur l'écran de connexion ? (par exemple : Papa, Marie) : " nom
+    read -rp "Quel nom afficher sur l'écran de connexion ? (par exemple : Dylan, Papa) : " nom
     nom="${nom:-PalinGone}"
     if nom_valide "$nom"; then break; fi
     info "Ce nom contient un caractère non accepté. Utilisez des lettres, des chiffres,"
     info "des espaces, des apostrophes, des points ou des tirets."
   done
+  # Identifiant
+  proposition="$(identifiant_depuis "$nom")"
+  identifiant_valide "$proposition" || proposition="utilisateur"
+  echo
+  info "L'identifiant est le nom technique du compte : celui du dossier personnel"
+  info "(/home/...) et du terminal. En minuscules, sans accent ni espace."
+  while true; do
+    read -rp "Identifiant (Entrée pour garder « $proposition ») : " identifiant
+    identifiant="${identifiant:-$proposition}"
+    if identifiant_valide "$identifiant"; then break; fi
+    info "Cet identifiant n'est pas possible. Utilisez des minuscules, des chiffres,"
+    info "des tirets, en commençant par une lettre (pas de nom réservé comme « root »)."
+  done
+  # Nom de la machine
+  proposition="pc-${identifiant//_/-}"
+  proposition="${proposition:0:63}"
+  echo
+  info "Le nom de la machine sert à la reconnaître sur le réseau"
+  info "(imprimante, partage de fichiers...)."
+  while true; do
+    read -rp "Nom de la machine (Entrée pour garder « $proposition ») : " machine
+    machine="${machine:-$proposition}"
+    if machine_valide "$machine"; then break; fi
+    info "Ce nom n'est pas possible. Utilisez des minuscules, des chiffres et des tirets"
+    info "(pas de tiret au début ni à la fin)."
+  done
   {
     printf "# Réglages propres à CETTE machine, créés par l'installateur PalinGoneOS le %s.\n" "$(date +%d/%m/%Y)"
     printf '# Les mises à jour ne modifient jamais ce fichier.\n'
     printf '{\n'
-    printf '  users.users.palingone.description = "%s";   # nom affiché à la connexion\n' "$nom"
+    printf '  palingoneos.utilisateur.identifiant = "%s";   # nom du compte (terminal, /home/%s)\n' "$identifiant" "$identifiant"
+    printf '  palingoneos.utilisateur.nom = "%s";   # nom affiché à la connexion\n' "$nom"
+    printf '  networking.hostName = "%s";   # nom de la machine sur le réseau\n' "$machine"
     printf '%s' "$NVIDIA_CONF"
     printf '}\n'
   } >"$LOCAL/machine.nix"
-  fait "Nom affiché : « $nom »"
+  fait "Compte : $nom (identifiant : $identifiant)"
+  fait "Nom de la machine : $machine"
 
   #------------------------------------------
   ecran "Étape 6/7 - Téléchargement de PalinGoneOS"
@@ -332,7 +397,7 @@ EOF
   info "pour vous connecter et pour les réglages importants."
   info "Rien ne s'affiche pendant que vous tapez : c'est normal."
   echo
-  until nixos-enter --root "$CIBLE" -c 'passwd palingone'; do
+  until nixos-enter --root "$CIBLE" -c "passwd $identifiant"; do
     echo
     attention "Les deux mots de passe ne sont pas identiques. Recommencez."
     echo
