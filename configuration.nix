@@ -29,7 +29,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.27";   # compte et nom de machine personnalisables
+  palingoneos.version = "0.31.28";   # mise à jour automatique des logiciels du 01/11/2026
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
