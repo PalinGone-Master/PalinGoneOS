@@ -15,7 +15,7 @@
     ./gaming.nix                   # Steam, Proton, Wine, Lutris, Heroic
     ./remote.nix                   # Remmina, RustDesk
     ./system-tuning.nix            # recommandations NixOS (disque, impression, compatibilité)
-    ./dev-tools.nix                # outils de développement (machine du créateur seulement)
+    ./dev-tools.nix                # outils de développement (sur toutes les machines, pour travailler partout)
     ./apps.nix			   # logiciels grand public (Thunderbird, Discord, WhatsApp, Kdenlive...)
     ./virtualisation.nix           # VM Windows (KVM/QEMU) pour les logiciels sans équivalent Linux
     ./scheduler.nix                # Addon du kernel pour l'input lag en jeu et optimisations autonomie
@@ -29,7 +29,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.28";   # mise à jour automatique des logiciels du 01/11/2026
+  palingoneos.version = "0.31.29";   # installateur : bons identifiants de partitions, anciens volumes LVM libérés
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [

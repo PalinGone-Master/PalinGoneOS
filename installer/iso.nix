@@ -18,6 +18,7 @@ let
       pkgs.util-linux # lsblk, sfdisk, wipefs, findmnt
       pkgs.dosfstools # mkfs.fat
       pkgs.e2fsprogs # mkfs.ext4
+      pkgs.lvm2 # dmsetup : libérer les volumes LVM et chiffrés d'un ancien système
       pkgs.gawk
       pkgs.gnused
       pkgs.coreutils

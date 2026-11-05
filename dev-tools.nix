@@ -1,5 +1,6 @@
-# Outils de développement — pour la machine du créateur uniquement.
-# Ce module ne doit PAS être importé dans la configuration de l'ISO « famille ».
+# Outils de développement (gh, Rust, helix...).
+# Présents sur TOUTES les machines PalinGoneOS, par choix : on peut ainsi travailler
+# sur le projet depuis n'importe quel ordinateur de la famille.
 { pkgs, ... }:
 
 {

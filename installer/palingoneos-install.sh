@@ -156,6 +156,76 @@ detecter_nvidia() {
 }
 
 #==========================================
+# Disque
+#==========================================
+
+# Libère le disque choisi de tout ce qui l'utilise encore : volumes LVM, partitions
+# chiffrées, mémoire d'échange, montages. Exemple : l'ancien Ubuntu d'un portable,
+# dont la clé USB active toute seule les volumes LVM au démarrage. Sans ça, le
+# découpage échoue avec « disque actuellement utilisé ».
+# Entrée : $1 = le disque (ex. /dev/nvme0n1).
+liberer_disque() {
+  local disque="$1" nom type reste
+  swapoff "$ECHANGE" 2>/dev/null || true # reste d'un essai précédent
+  umount -R "$CIBLE" 2>/dev/null || true
+
+  # Tout ce qui est sur le disque, du plus profond (volumes) au disque lui-même
+  # (tac inverse la liste de lsblk) : on détache chaque élément avant son parent.
+  while read -r nom type; do
+    swapoff "$nom" 2>/dev/null || true
+    umount -A "$nom" 2>/dev/null || true # -A : à tous les endroits où il est monté
+    case "$type" in
+      lvm | crypt | dm)
+        # Volume LVM ou partition chiffrée : on retire sa « projection » (device-mapper).
+        dmsetup remove --retry "${nom##*/}" 2>/dev/null || true
+        ;;
+    esac
+  done < <(lsblk -nrpo NAME,TYPE "$disque" | tac)
+  udevadm settle
+
+  # Il ne doit plus rester que le disque et ses partitions, et rien de monté.
+  reste="$(lsblk -nrpo NAME,TYPE "$disque" | awk -v d="$disque" '$1 != d && $2 != "part" { print $1 }' | sort -u | xargs)"
+  if [ -n "$reste" ]; then
+    stop "le disque est encore utilisé par : $reste. Redémarrez sur la clé et recommencez."
+  fi
+  if lsblk -nrpo MOUNTPOINTS "$disque" | grep -q .; then
+    stop "une partition du disque est encore utilisée. Redémarrez sur la clé et recommencez."
+  fi
+
+  # Efface les signatures des anciennes partitions (LVM, chiffrement, mémoire d'échange...),
+  # pour que rien ne se réactive tout seul pendant la préparation.
+  while read -r nom type; do
+    if [ "$type" = part ]; then wipefs -af "$nom" >/dev/null 2>&1 || true; fi
+  done < <(lsblk -nrpo NAME,TYPE "$disque")
+  udevadm settle
+}
+
+# Le fichier matériel doit désigner les deux partitions par leurs VRAIS identifiants,
+# lus directement sur le disque (blkid -p, sans passer par un cache).
+# Sinon, nixos-generate-config peut reprendre l'identifiant d'une ANCIENNE partition,
+# resté en mémoire depuis l'ancien contenu du disque : l'ordinateur installé ne trouve
+# alors plus sa partition de démarrage (« Timed out waiting for device /dev/disk/by-uuid/... »).
+# Entrées : $1 = hardware-configuration.nix, $2 = partition BOOT, $3 = partition système.
+corriger_identifiants() {
+  local fichier="$1" boot="$2" racine="$3" id_boot id_racine
+  id_boot="$(blkid -p -s UUID -o value "$boot" || true)"
+  id_racine="$(blkid -p -s UUID -o value "$racine" || true)"
+  if [ -z "$id_boot" ] || [ -z "$id_racine" ]; then
+    stop "impossible de lire l'identifiant des partitions."
+  fi
+  # Dans le bloc de « / » puis dans celui de « /boot » (jusqu'à la ligne fsType),
+  # remplace le périphérique écrit, quel qu'il soit, par le bon identifiant.
+  sed -i -E \
+    -e '/^ *fileSystems\."\/" =/,/fsType/ s|device = "[^"]*"|device = "/dev/disk/by-uuid/'"$id_racine"'"|' \
+    -e '/^ *fileSystems\."\/boot" =/,/fsType/ s|device = "[^"]*"|device = "/dev/disk/by-uuid/'"$id_boot"'"|' \
+    "$fichier"
+  if ! grep -qF "device = \"/dev/disk/by-uuid/$id_racine\"" "$fichier" ||
+    ! grep -qF "device = \"/dev/disk/by-uuid/$id_boot\"" "$fichier"; then
+    stop "le fichier matériel n'a pas pu être vérifié ($fichier)."
+  fi
+}
+
+#==========================================
 # Installation
 #==========================================
 main() {
@@ -241,14 +311,8 @@ main() {
   #------------------------------------------
   ecran "Étape 3/7 - Préparation du disque"
   info "Préparation en cours..."
-  local p parts boot racine verrou attente
-  swapoff "$ECHANGE" 2>/dev/null || true # reste d'un essai précédent
-  umount -R "$CIBLE" 2>/dev/null || true
-  for p in $(lsblk -lnpo NAME "$disque" | tail -n +2); do
-    umount "$p" 2>/dev/null || true
-    swapoff "$p" 2>/dev/null || true
-  done
-  udevadm settle
+  local parts boot racine verrou attente
+  liberer_disque "$disque"
 
   # VERROU sur le disque pendant le découpage et le formatage.
   # Sans lui, le système (udev) relit le disque en arrière-plan juste après le
@@ -277,6 +341,8 @@ EOF
   if ! [ -b "$boot" ] || ! [ -b "$racine" ]; then
     stop "le disque n'a pas pu être préparé correctement ($attente essais)."
   fi
+  # Efface ce qui pourrait rester de l'ancien contenu au début des nouvelles partitions.
+  wipefs -af "$boot" "$racine" >/dev/null
   mkfs.fat -F 32 -n BOOT "$boot" >/dev/null
   mkfs.ext4 -F -q -L palingoneos "$racine"
   sync
@@ -298,7 +364,12 @@ EOF
   ecran "Étape 4/7 - Détection du matériel"
   info "Détection en cours..."
   mkdir -p "$LOCAL"
+  # Fait mettre à jour la liste des identifiants de partitions (/dev/disk/by-uuid)
+  # avant que nixos-generate-config ne la lise.
+  udevadm trigger --action=change "$boot" "$racine" 2>/dev/null || true
+  udevadm settle
   nixos-generate-config --root "$CIBLE" --show-hardware-config >"$LOCAL/hardware-configuration.nix" 2>/dev/null
+  corriger_identifiants "$LOCAL/hardware-configuration.nix" "$boot" "$racine"
   detecter_nvidia "$(lspci -D -nn)" "$(cat /sys/class/dmi/id/chassis_type 2>/dev/null || echo 0)"
   fait "Matériel détecté"
   fait "Carte graphique : $CARTE"
