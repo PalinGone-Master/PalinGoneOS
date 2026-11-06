@@ -11,6 +11,7 @@
   imports = [
     /etc/palingoneos-local/hardware-configuration.nix   # propre à chaque machine, HORS du dépôt (jamais touché par les mises à jour)
     ./palingoneos-update.nix       # service de mise à jour (polkit)
+    ./notification-maj.nix         # notification quand une mise à jour est disponible
     ./branding.nix                 # nom, version, fond d'écran, démarrage, fastfetch
     ./gaming.nix                   # Steam, Proton, Wine, Lutris, Heroic
     ./remote.nix                   # Remmina, RustDesk
@@ -29,7 +30,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.29";   # installateur : bons identifiants de partitions, anciens volumes LVM libérés
+  palingoneos.version = "0.31.30";   # notification quand une mise à jour est disponible
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
