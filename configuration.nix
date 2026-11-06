@@ -30,7 +30,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.31";   # le Centre de maintenance ne s'ouvre plus à chaque connexion
+  palingoneos.version = "0.31.32";   # fonds d'écran PalinGoneOS proposés dans les paramètres
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [

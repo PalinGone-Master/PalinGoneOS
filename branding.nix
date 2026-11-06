@@ -10,6 +10,12 @@ let
   brandingPackage = pkgs.runCommand "palingoneos-branding" { } ''
     install -Dm644 ${./branding/wallpaper.png} $out/share/backgrounds/palingoneos/wallpaper.png
 
+    # Fonds d'écran supplémentaires aux couleurs de PalinGoneOS (branding/fonds/) :
+    # proposés dans Paramètres → Bureau → Fond d'écran. Le fond par défaut reste wallpaper.png.
+    for f in ${./branding/fonds}/*.jpg; do
+      install -Dm644 "$f" "$out/share/backgrounds/palingoneos/$(basename "$f")"
+    done
+
     dir=$out/share/cosmic/com.system76.CosmicBackground/v1
     mkdir -p "$dir"
     cat > "$dir/all" <<EOF
