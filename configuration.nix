@@ -30,7 +30,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.30";   # notification quand une mise à jour est disponible
+  palingoneos.version = "0.31.31";   # le Centre de maintenance ne s'ouvre plus à chaque connexion
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [

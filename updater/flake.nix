@@ -35,16 +35,18 @@
           ];
 
           postInstall = ''
-            mkdir -p $out/share/applications $out/etc/xdg/autostart
+            # Raccourci dans le menu des applications. Le Centre ne se lance plus tout seul
+            # à chaque connexion : une notification prévient quand une mise à jour est
+            # disponible (voir notification-maj.nix).
+            mkdir -p $out/share/applications
             if [ -d "share/applications" ]; then
               cp -r share/applications/* $out/share/applications/
-              cp -r share/applications/* $out/etc/xdg/autostart/
             fi
 
             # Icône PalinGoneOS (losange + P), à la place de l'icône générique système.
             install -Dm644 ${./branding/icon-512.png} \
               $out/share/icons/hicolor/512x512/apps/palin-gone-os-updater.png
-            for f in $out/share/applications/*.desktop $out/etc/xdg/autostart/*.desktop; do
+            for f in $out/share/applications/*.desktop; do
               sed -i "s|^Icon=.*|Icon=$out/share/icons/hicolor/512x512/apps/palin-gone-os-updater.png|" "$f"
             done
 

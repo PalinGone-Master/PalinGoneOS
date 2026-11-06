@@ -94,14 +94,14 @@ in
     };
   };
 
-  # Le Centre de maintenance s'ouvre déjà à chaque connexion : la première
-  # vérification a donc lieu une heure après, puis toutes les heures.
+  # Première vérification 5 minutes après la connexion (le temps que le réseau soit prêt),
+  # puis toutes les heures.
   systemd.user.timers.palingoneos-verif-maj = {
     description = "PalinGoneOS — recherche d'une mise à jour toutes les heures";
     wantedBy = [ "graphical-session.target" ];
     partOf = [ "graphical-session.target" ];
     timerConfig = {
-      OnActiveSec = "1h";
+      OnActiveSec = "5min";
       OnUnitActiveSec = "1h";
       RandomizedDelaySec = "5min"; # les machines de la famille n'interrogent pas GitHub à la même seconde
     };
