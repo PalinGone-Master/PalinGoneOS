@@ -1,5 +1,5 @@
 # PalinGoneOS — logiciels grand public pour les autres utilisateurs de la machine
-# (navigateur, messagerie, e-mail, montage vidéo, mot de passe, sauvegarde).
+# (navigateur, messagerie, e-mail, montage vidéo, mot de passe, sauvegarde, disques).
 { pkgs, ... }:
 
 {
@@ -18,5 +18,10 @@
     keepassxc    # gestionnaire de mots de passe, libre (GPLv2+)
     deja-dup     # sauvegarde de fichiers, libre (GPL) — interface simple, planification incluse
     vlc          # lecteur vidéo, tous formats/codecs, libre (LGPL) — coexiste avec cosmic-player
+
+    # Partitionner et formater les disques (libre, GPL). Le mot de passe est demandé
+    # à l'ouverture. withAllTools : gère aussi NTFS (Windows), exFAT (clés USB),
+    # LVM, partitions chiffrées, btrfs...
+    (gparted.override { withAllTools = true; })
   ];
 }
