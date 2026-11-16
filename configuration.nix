@@ -13,7 +13,6 @@
     ./palingoneos-update.nix       # service de mise à jour (polkit)
     ./ssh.nix                      # accès SSH : réseau local uniquement, par clé uniquement
     ./notification-maj.nix         # notification quand une mise à jour est disponible
-    ./cloud.nix                    # comptes en ligne (rclone) ouverts tout seuls dans ~/Cloud/<nom>
     ./branding.nix                 # nom, version, fond d'écran, démarrage, fastfetch
     ./gaming.nix                   # Steam, Proton, Wine, Lutris, Heroic
     ./remote.nix                   # Remmina, RustDesk
@@ -32,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.37";   # Rclone UI : affichage corrigé sous COSMIC
+  palingoneos.version = "0.31.38";   # annulation de Rclone UI et de l'ouverture automatique ~/Cloud
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
