@@ -24,8 +24,10 @@
     # LVM, partitions chiffrées, btrfs...
     (gparted.override { withAllTools = true; })
 
-    # Synchroniser ou monter un stockage en ligne (Google Drive, OneDrive, pCloud...).
-    # Configuration : rclone config ; montage comme un dossier : rclone mount distant: ~/dossier
+    # Comptes en ligne (Google Drive, OneDrive, pCloud...) : rclone, et Rclone UI pour
+    # les ajouter en cliquant (libre, Apache 2.0 ; version gratuite : 4 comptes).
+    # Chaque compte s'ouvre ensuite tout seul dans ~/Cloud/<nom> (voir cloud.nix).
     rclone
+    rclone-ui
   ];
 }
