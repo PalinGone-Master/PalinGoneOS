@@ -31,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.34";   # rclone, et SSH en réseau local par clé uniquement
+  palingoneos.version = "0.31.35";   # pgos-ssh : chacun choisit qui peut se connecter à son ordinateur
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [

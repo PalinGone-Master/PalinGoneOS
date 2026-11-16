@@ -4,18 +4,34 @@
 # - Seul le compte principal peut se connecter, jamais root (sudo redemande le mot de passe).
 # - Le port 22 n'est ouvert qu'aux adresses du réseau local (box, Wi-Fi de la maison) :
 #   depuis Internet, il reste fermé.
-# - Les clés autorisées sont les fichiers .pub du dossier ssh/cles/ (clés PUBLIQUES,
-#   sans danger dans un dépôt public).
+# - Deux sortes de clés autorisées :
+#     * celles de l'administrateur : fichiers .pub du dossier ssh/cles/ du dépôt
+#       (clés PUBLIQUES, sans danger dans un dépôt public), valables sur TOUTES les machines ;
+#     * celles que chaque utilisateur choisit pour SON ordinateur, avec la commande
+#       pgos-ssh (rangées dans ~/.ssh/authorized_keys, propres à cette machine).
+#   Exemple : quelqu'un qui a deux ordinateurs autorise l'un à se connecter à l'autre
+#   avec « pgos-ssh ma-cle » sur le premier et « pgos-ssh autoriser ... » sur le second.
 #
 # Pour se connecter depuis un autre ordinateur de la maison :
 #   ssh <identifiant>@<nom-de-la-machine>.local      (ex. ssh dylan@pc-dylan.local)
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   utilisateur = config.palingoneos.utilisateur.identifiant;
   dossierCles = ./ssh/cles;
   cles = map (nom: dossierCles + "/${nom}")
     (builtins.filter (nom: lib.hasSuffix ".pub" nom) (builtins.attrNames (builtins.readDir dossierCles)));
+
+  # pgos-ssh : gérer simplement, sans connaître SSH, qui peut se connecter à CET ordinateur.
+  pgosSsh = pkgs.writeShellApplication {
+    name = "pgos-ssh";
+    runtimeInputs = [ pkgs.openssh pkgs.coreutils pkgs.gnugrep pkgs.gnused pkgs.gawk ];
+    text = builtins.readFile ./ssh/pgos-ssh.sh;
+  };
+
+  pgosSshMan = pkgs.runCommand "pgos-ssh-man" { } ''
+    install -Dm644 ${./ssh/pgos-ssh.1} $out/share/man/man1/pgos-ssh.1
+  '';
 in
 {
   services.openssh = {
@@ -30,7 +46,11 @@ in
     };
   };
 
+  # Clés de l'administrateur (dépôt). Les clés choisies par l'utilisateur
+  # (~/.ssh/authorized_keys, via pgos-ssh) sont lues en plus, par défaut.
   users.users.${utilisateur}.openssh.authorizedKeys.keyFiles = cles;
+
+  environment.systemPackages = [ pgosSsh pgosSshMan ];
 
   # Port 22 ouvert uniquement aux adresses privées (réseau local) :
   # IPv4 10.x, 172.16-31.x, 192.168.x ; IPv6 locales (fe80::, fd00::).

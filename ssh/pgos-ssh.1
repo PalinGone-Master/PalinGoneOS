@@ -1,0 +1,53 @@
+.TH PGOS-SSH 1 "2026" "PalinGoneOS" "Commandes PalinGoneOS"
+.SH NOM
+pgos-ssh \- choisir qui peut se connecter en SSH à cet ordinateur
+.SH SYNOPSIS
+.B pgos-ssh
+.RB [ ma-cle | autoriser
+.IR CLÉ
+.RB | liste | retirer
+.IR NUMÉRO
+.RB | adresse ]
+.SH DESCRIPTION
+Sur PalinGoneOS, SSH n'est ouvert qu'au réseau local, et uniquement par clé :
+aucun mot de passe n'est accepté. Cette commande permet à chacun de choisir,
+pour son propre ordinateur, quels autres ordinateurs peuvent s'y connecter.
+.TP
+.B ma-cle
+Affiche la clé publique de cet ordinateur (et la crée si besoin, avec une
+phrase de passe conseillée). C'est cette ligne qu'on autorise sur l'autre
+ordinateur. Elle peut être transmise sans danger.
+.TP
+.BI autoriser " CLÉ"
+Autorise une clé (la ligne « ssh-ed25519 ... » donnée par
+.B pgos-ssh ma-cle
+sur l'autre ordinateur, ou un fichier .pub) à se connecter à cet ordinateur.
+.TP
+.B liste
+Liste les clés autorisées sur cet ordinateur, numérotées, ainsi que les clés
+de l'administrateur PalinGoneOS (présentes sur toutes les machines).
+.TP
+.BI retirer " NUMÉRO"
+Retire la clé portant ce numéro dans
+.BR "pgos-ssh liste" .
+.TP
+.B adresse
+Affiche la commande à taper sur un autre ordinateur pour se connecter à celui-ci.
+.SH EXEMPLE
+Pour aller de l'ordinateur A vers l'ordinateur B :
+.PP
+.nf
+  sur A :  pgos-ssh ma-cle
+  sur B :  pgos-ssh autoriser ssh-ed25519 AAAA... papa@pc-a
+  sur A :  ssh papa@pc-b.local
+.fi
+.SH FICHIERS
+.TP
+.I ~/.ssh/authorized_keys
+Clés autorisées par l'utilisateur sur cet ordinateur.
+.TP
+.I ~/.ssh/id_ed25519
+Clé privée de cet ordinateur : ne jamais la transmettre.
+.SH VOIR AUSSI
+.BR ssh (1),
+.BR pgos-version (1)
