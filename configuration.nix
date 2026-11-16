@@ -11,6 +11,7 @@
   imports = [
     /etc/palingoneos-local/hardware-configuration.nix   # propre à chaque machine, HORS du dépôt (jamais touché par les mises à jour)
     ./palingoneos-update.nix       # service de mise à jour (polkit)
+    ./ssh.nix                      # accès SSH : réseau local uniquement, par clé uniquement
     ./notification-maj.nix         # notification quand une mise à jour est disponible
     ./branding.nix                 # nom, version, fond d'écran, démarrage, fastfetch
     ./gaming.nix                   # Steam, Proton, Wine, Lutris, Heroic
@@ -30,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.33";   # GParted pour gérer les disques
+  palingoneos.version = "0.31.34";   # rclone, et SSH en réseau local par clé uniquement
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
@@ -86,17 +87,12 @@
   networking.hostName = lib.mkDefault "palingoneos";
   networking.networkmanager.enable = true;
 
-  # Pare-feu actif : aucun port entrant n'est ouvert.
+  # Pare-feu actif : aucun port entrant n'est ouvert, sauf SSH depuis le réseau local (ssh.nix).
   # Backend nftables : le successeur moderne d'iptables (règles plus rapides et plus lisibles).
   networking.nftables.enable = true;
   networking.firewall.enable = true;
 
-  # SSH DÉSACTIVÉ : il n'est pas utile sur un poste familial et exposait le compte utilisateur.
-  # Pour le réactiver, utiliser UNIQUEMENT des clés (jamais de mot de passe) :
-  #   services.openssh.enable = true;
-  #   services.openssh.settings.PasswordAuthentication = false;
-  #   services.openssh.settings.PermitRootLogin = "no";
-  services.openssh.enable = false;
+  # SSH : voir ssh.nix (réseau local uniquement, connexion par clé uniquement).
 
   # sudo : mot de passe obligatoire, réservé au groupe wheel.
   # (La mise à jour du système passe par palingoneos-update.nix, sans règle NOPASSWD.)

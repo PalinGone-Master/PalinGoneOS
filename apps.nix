@@ -23,5 +23,9 @@
     # à l'ouverture. withAllTools : gère aussi NTFS (Windows), exFAT (clés USB),
     # LVM, partitions chiffrées, btrfs...
     (gparted.override { withAllTools = true; })
+
+    # Synchroniser ou monter un stockage en ligne (Google Drive, OneDrive, pCloud...).
+    # Configuration : rclone config ; montage comme un dossier : rclone mount distant: ~/dossier
+    rclone
   ];
 }
