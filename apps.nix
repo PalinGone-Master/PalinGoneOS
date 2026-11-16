@@ -28,6 +28,17 @@
     # les ajouter en cliquant (libre, Apache 2.0 ; version gratuite : 4 comptes).
     # Chaque compte s'ouvre ensuite tout seul dans ~/Cloud/<nom> (voir cloud.nix).
     rclone
-    rclone-ui
+    # Rclone UI, avec l'affichage corrigé : sous COSMIC (Wayland), son moteur d'affichage
+    # WebKitGTK donne sinon des fenêtres noires. Simple enveloppe : rien n'est recompilé.
+    (symlinkJoin {
+      name = "rclone-ui-palingoneos";
+      paths = [ rclone-ui ];
+      nativeBuildInputs = [ makeWrapper ];
+      postBuild = ''
+        wrapProgram $out/bin/rclone-ui \
+          --set WEBKIT_DISABLE_DMABUF_RENDERER 1 \
+          --set WEBKIT_DISABLE_COMPOSITING_MODE 1
+      '';
+    })
   ];
 }
