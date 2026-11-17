@@ -27,5 +27,12 @@
     # Synchroniser ou monter un stockage en ligne (Google Drive, OneDrive, pCloud...).
     # Configuration : rclone config ; montage comme un dossier : rclone mount distant: ~/dossier
     rclone
+
+    # Sons et voix (alarmes, annonces) :
+    #   play fichier.wav             jouer un son (play est fourni par sox)
+    #   play -n synth 1 sine 880     bip de 1 seconde à 880 Hz
+    #   espeak-ng -v fr "Bonjour"    faire parler l'ordinateur
+    sox
+    espeak-ng
   ];
 }

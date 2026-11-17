@@ -31,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.38";   # annulation de Rclone UI et de l'ouverture automatique ~/Cloud
+  palingoneos.version = "0.31.39";   # sox et espeak-ng pour les sons et alarmes
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
