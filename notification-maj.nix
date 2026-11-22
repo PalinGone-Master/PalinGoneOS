@@ -4,6 +4,7 @@
 # dernière version publiée sur GitHub (comme le Centre de maintenance, sans aucun
 # droit administrateur). S'il y a du nouveau, une notification COSMIC s'affiche :
 #   « Mise à jour disponible — PalinGoneOS X.Y.Z est prête. »
+# Un « ding-dong » retentit en même temps, pour qu'on la remarque.
 # Un clic sur la notification (ou sur son bouton « Mettre à jour ») ouvre le
 # Centre de maintenance. Rien ne s'installe jamais tout seul.
 #
@@ -25,6 +26,7 @@ let
       pkgs.coreutils
       pkgs.gnused
       pkgs.procps # pgrep : le Centre est-il déjà ouvert ?
+      pkgs.sox # play : le « ding-dong » de la notification
       config.systemd.package # systemd-run : ouvrir le Centre
     ];
     text = ''
@@ -64,6 +66,13 @@ let
         mkdir -p "$(dirname "$memoire")"
         echo "$derniere $maintenant" >"$memoire"
       fi
+
+      # Le « ding-dong » (deux notes qui descendent), joué en arrière-plan pendant que
+      # la notification s'affiche. Sans haut-parleur ou son coupé : rien, sans erreur.
+      ( play -q -n \
+          synth 0.4 sine 988 fade q 0.005 0.4 0.35 gain -n -6 : \
+          synth 0.9 sine 784 fade q 0.005 0.9 0.85 gain -n -6 \
+          >/dev/null 2>&1 || true ) &
 
       # La notification. « default » = clic sur la notification elle-même.
       # notify-send attend la réponse (au plus 50 minutes, avant la vérification suivante).

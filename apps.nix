@@ -24,6 +24,10 @@
     # LVM, partitions chiffrées, btrfs...
     (gparted.override { withAllTools = true; })
 
+    # « Disques » : formater une clé USB ou un disque en 2 clics (choisir le disque
+    # à gauche, puis « Formater »). Bien plus simple que GParted pour l'usage courant.
+    gnome-disk-utility
+
     # Synchroniser ou monter un stockage en ligne (Google Drive, OneDrive, pCloud...).
     # Configuration : rclone config ; montage comme un dossier : rclone mount distant: ~/dossier
     rclone

@@ -31,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.42";   # mise à jour automatique des logiciels du 22/11/2026
+  palingoneos.version = "0.31.43";   # GNOME Disques, ding-dong sur la notification de mise à jour
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
