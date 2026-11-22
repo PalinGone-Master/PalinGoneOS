@@ -31,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.43";   # GNOME Disques, ding-dong sur la notification de mise à jour
+  palingoneos.version = "0.31.44";   # mise à jour : plus de fausse erreur quand un service ne redémarre pas
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [

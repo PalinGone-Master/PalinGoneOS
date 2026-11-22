@@ -14,7 +14,7 @@
 let
   updateScript = pkgs.writeShellApplication {
     name = "palingoneos-update-run";
-    runtimeInputs = [ pkgs.git pkgs.util-linux pkgs.coreutils config.nix.package ];
+    runtimeInputs = [ pkgs.git pkgs.util-linux pkgs.coreutils config.nix.package config.systemd.package ];
     text = ''
       VERSION="''${1:-}"
 
@@ -55,8 +55,21 @@ let
       fi
 
       echo "==> Construction et activation du système (patience…)"
+      # Le système en service AVANT la mise à jour (pour savoir ensuite s'il a changé).
+      AVANT="$(readlink -f /run/current-system)"
       # --impure : autorise Nix à lire /etc/palingoneos-local/, qui est en dehors du dépôt.
       if ! /run/current-system/sw/bin/nixos-rebuild switch --impure --flake /etc/nixos#palingoneos; then
+        # Échec APRÈS l'installation : le nouveau système est déjà en place (et au
+        # démarrage), seuls un ou plusieurs services n'ont pas voulu (re)démarrer à chaud.
+        # Ce n'est pas un échec de la mise à jour : on garde la nouvelle version
+        # (revenir en arrière dans /etc/nixos mettrait le dépôt en désaccord avec le système).
+        if [ "$(readlink -f /run/current-system)" != "$AVANT" ]; then
+          echo "==> Le nouveau système est installé, mais ces services n'ont pas redémarré :"
+          systemctl --failed --no-legend --plain || true
+          echo "==> Ils repartiront au prochain redémarrage de l'ordinateur."
+          echo "==> Mise à jour terminée (redémarrage conseillé)"
+          exit 0
+        fi
         echo "==> ÉCHEC : retour à la version précédente" >&2
         git checkout --force "$PREV"
         exit 1
