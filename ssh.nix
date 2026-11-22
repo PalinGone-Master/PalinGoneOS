@@ -61,8 +61,9 @@ in
 
   # Chaque machine annonce son nom sur le réseau local (pc-dylan.local...) :
   # on peut s'y connecter par son nom, sans chercher son adresse.
-  services.avahi.publish = {
-    enable = true;
-    addresses = true;
+  # (Nouvelle écriture NixOS : l'ancienne « services.avahi.publish » est abandonnée.)
+  services.avahi.settings.publish = {
+    disable-publishing = false;
+    publish-addresses = true;
   };
 }

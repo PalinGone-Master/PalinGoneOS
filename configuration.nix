@@ -31,7 +31,7 @@
   #==============================================================================================================================
   # VERSION — le SEUL endroit à modifier pour publier une nouvelle version (doit correspondre au tag Git vX.Y.Z)
   #==============================================================================================================================
-  palingoneos.version = "0.31.40";   # numérisation de documents (scanners)
+  palingoneos.version = "0.31.41";   # correction de la mise à jour automatique (scx-loader)
 
   # Activation de Nix Experimental
   nix.settings.experimental-features = [
