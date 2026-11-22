@@ -1,4 +1,4 @@
-# PalinGoneOS — recommandations NixOS : stabilité, compatibilité, disque, impression.
+# PalinGoneOS — recommandations NixOS : stabilité, compatibilité, disque, impression, numérisation.
 { config, lib, pkgs, inputs, ... }:
 
 {
@@ -50,4 +50,31 @@
   services.avahi.nssmdns4 = true;
   # cups-browsed est un démon réseau à l'historique de failles (2024) : inutile ici.
   services.printing.browsed.enable = false;
+
+  #==========================================
+  # Numérisation (scanners)
+  #==========================================
+  # Appli « Numériseur de documents » (simple-scan) dans le menu.
+  environment.systemPackages = [ pkgs.simple-scan ];
+
+  hardware.sane = {
+    enable = true;
+    # sane-airscan : la plupart des imprimantes-scanners récentes (Wi-Fi, réseau
+    # ou USB) sont trouvées SANS pilote, comme pour l'impression.
+    extraBackends = [ pkgs.sane-airscan ];
+    # « escl » fait la même chose qu'airscan, en moins bien : sans ça, chaque
+    # scanner apparaîtrait deux fois dans la liste.
+    disabledDefaultBackends = [ "escl" ];
+  };
+  # Les imprimantes-scanners branchées en USB passent par le même chemin sans pilote.
+  services.ipp-usb.enable = true;
+  # Trouver les scanners sur le réseau local (Avahi, déjà utilisé pour l'impression).
+  services.avahi.enable = true;
+
+  # Le compte principal a le droit d'utiliser les scanners (voir utilisateur.nix).
+  users.users.${config.palingoneos.utilisateur.identifiant}.extraGroups = [ "scanner" "lp" ];
+
+  # Scanner ancien ou qui n'apparaît pas : il lui faut le pilote de sa marque.
+  #   HP : pkgs.hplipWithPlugin, ou Epson : pkgs.epkowa  -> à ajouter dans extraBackends
+  #   Brother : hardware.sane.brscan4.enable = true; (ou brscan5 selon le modèle)
 }
